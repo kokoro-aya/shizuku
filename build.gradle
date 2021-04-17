@@ -1,0 +1,56 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm' version '1.4.32'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.32'
+    id 'application'
+}
+
+group 'org.ironica'
+version '3.0.0-SNAPSHOT'
+
+sourceCompatibility = 11
+
+final GRAMMAR_DIR = 'gen/src/main'
+final LOCAL_GRAMMAR_DIR = 'src/main/gen'
+
+sourceSets {
+    main {
+        java { srcDirs += GRAMMAR_DIR }
+        java { srcDirs += LOCAL_GRAMMAR_DIR }
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://kotlin.bintray.com/kotlinx' }
+    maven { url 'https://dl.bintray.com/kotlin/ktor' }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.4.32'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+
+    implementation 'org.antlr:antlr4:4.9.2'
+
+    implementation 'io.ktor:ktor-server-core:1.4.3'
+    implementation 'io.ktor:ktor-server-netty:1.4.3'
+    implementation 'ch.qos.logback:logback-classic:1.2.3'
+    implementation 'io.ktor:ktor-serialization:1.4.3'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:0.20.0'
+
+    testImplementation 'io.ktor:ktor-server-tests:1.4.3'
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "11"
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "11"
+}
+
+test {
+    useJUnitPlatform()
+}
