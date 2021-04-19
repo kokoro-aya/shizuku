@@ -1,0 +1,12 @@
+struct LinkedSet<K>(
+    cst link: LinkedList<K> = LinkedList<K>())
+    ::: Iterable {
+        cst add: (K) -> Void = { (a: K) ->
+            if !self.contains(a) {
+                self.link.add(a)
+            }
+        }
+        cst contains: (K) -> Bool = { (a: K) ->
+            return self.link.contains(a)
+        }
+    }

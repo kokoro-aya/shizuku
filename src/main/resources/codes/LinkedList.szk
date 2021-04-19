@@ -1,0 +1,65 @@
+struct Node<T>(var data: T, var next: Node<T>?)
+
+struct LinkedList<T>(
+    var head: Node<T>? = nil, var tail: Node<T>? = nil
+    ) {
+        cst add: (T) -> Void = { (data: T) ->
+            var node = new Node(data, nil)
+            if self.head == nil { self.head = node }
+            if self.tail == nil { self.tail = node }
+            else {
+                self.tail.next = node
+                self.tail = self.tail.next
+            }
+        }
+        cst append: (LinkedList<T>) -> LinkedList<T> = { (list: LinkedList<T>) ->
+            self.tail.next = list
+            return self
+        }
+        cst addAll: ([T]) -> Void = { (data: Array<T>) ->
+            for x in data {
+                self.add(x)
+            }
+        }
+        cst remove: (T) -> Void = { (data: T) ->
+            var tmp = self.head; var prev = nil
+            if tmp != nil && tmp.data == data {
+                self.head = tmp.next
+                return
+            } else {
+                while tmp != nil && tmp.data != data {
+                    prev = tmp; tmp = tmp.next
+                }
+                if tmp == nil { return }
+                prev.next = tmp.next
+        struct Iterator() {
+            cst hasNext: () -> Bool = { () ->
+                curr != nil
+            }
+            cst next: () -> T = { () ->
+                if self.hasNext() {
+                    cst data = curr.data
+                    curr = curr.next
+                    return data
+                }
+                return nil
+            }
+        }
+        cst iterator: () -> Iterator = { () -> Iterator() }
+    }
+
+struct Foo(a: Int) {
+    cst foo: Double = 12.450
+    late var bar: Int
+    init {
+        self.bar = a * 4
+    }
+}
+
+func addAndPrint(a: Int) { print(a + 1) }
+cst list = LinkedList<Int>()
+list.addAll([3,4,5,6,7,8,9])
+list.forEach(::addAndPrint)
+cst transList = list.map({(e: Int) -> Foo(e)})
+cst transSum = transList.reduce({(e: Foo, f: Int) ->
+    e.bar + foo })

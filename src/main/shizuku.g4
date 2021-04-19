@@ -15,9 +15,9 @@ fragment DECIMAL_DIGIT: '0' .. '9';
 STATIC_STRING_LITERAL: '"' (ESC|.)*? '"';
 fragment ESC: '\\' | '\\\\';
 
-STRING_HEAD: '""' (ESC|~[\\()])*? '\\(';
-STRING_INTERM: ')' (ESC|~[\\()])*? '\\(';
-STRING_END: ')' (ESC|~[\\()])*? '""';
+STRING_HEAD: '""' (ESC|~[\\(){}])*? '\\({';
+STRING_INTERM: '})' (ESC|~[\\(){}])*? '\\({';
+STRING_END: '})' (ESC|~[\\()]{})*? '""';
 
 CHARACTER_LITERAL: '\'' CHAR '\'';
 fragment CHAR: ~['"\\EOF\n];
@@ -45,8 +45,6 @@ OR: '||';
 XOR: '^^';
 NOT: '!';
 EXP: '^';
-SHL: '<<';
-SHR: '>>';
 GT: '>';
 LT: '<';
 GEQ: '>=';
@@ -134,24 +132,26 @@ type_inheritance_clause: MIXINS type_identifier (',' type_identifier)*;
 // Expressions
 
 expression:
+          // Postfix expressions aka explicit member expressions
+            explicit_member_expression
           // Primary Expressions
-            variable_expression
+          | variable_expression
           | literal_expression
           | self_expression
+          | superclass_initialization_expression
           | closure_expression
+          | function_call_expression
           | parenthesized_expression
-          | tuple_expression
           | wildcard_expression
-          | implicit_member_expression
           // Binary Expressions
           | NOT expression
-          | expression op=(SHL | SHR) expression
+          | expression op=('<<' | '>>') expression
           | expression op=(MUL | DIV | MOD) expression
           | expression op=(ADD | SUB) expression
           | <assoc=right> expression EXP expression
           | expression APPEND expression
           | expression op=(THROUGH | UNTIL | DOWNTO | DOWNTHROUGH) expression (STEP expression)?
-          | expression type_casting_operator type
+          | expression type_casting_operator type_list
           | expression op=(NEQ | EQ | CPT) expression
           | expression op=(GT | LT | GEQ | LEQ) expression
           | expression op=AND expression
@@ -159,17 +159,17 @@ expression:
           | expression conditional_operator expression
           | pattern assignment_operator expression
           | pattern op=(ADDEQ | SUBEQ | MULEQ | DIVEQ | MODEQ) expression
-          // Postfix expressions aka explicit member expressions
-          | explicit_member_expression
           ;
 
 assignment_operator: '=';
 
 conditional_operator: '?' expression ':';
 
-type_casting_operator: 'is' type | 'as' type | 'as' '?' type | 'as' '!' type;
+type_casting_operator: 'is' | 'as' | 'as' '?' | 'as' '!';
 
-variable_expression: IDENTIFIER generic_parameter_clause?;
+type_list: type ('|' type)*;
+
+variable_expression: IDENTIFIER (':' type)?;
 
 literal_expression: literal | array_literal | map_literal;
 
@@ -182,14 +182,12 @@ map_literal_item: expression ':' expression;
 
 self_expression: 'self';
 superclass_expression: 'super';
-
+superclass_initialization_expression: superclass_expression '(' parameter_name (',' parameter_name)* ')';
 
 closure_expression: '{' closure_parameter_clause ARROW statements '}';
 closure_parameter_clause: '(' ')' | '(' closure_parameter (',' closure_parameter)* ')';
 closure_parameter: closure_parameter_name type_annotation;
 closure_parameter_name: IDENTIFIER;
-
-implicit_member_expression: '.' IDENTIFIER;
 
 parenthesized_expression: '(' expression ')';
 
@@ -200,7 +198,7 @@ tuple_element: expression | IDENTIFIER ':' expression;
 wildcard_expression: '_';
 
 
-function_call_expression: function_name function_call_argument_clause;
+function_call_expression: function_name generic_argument_clause? function_call_argument_clause;
 function_call_argument_clause: '(' ')' | '(' function_call_by_name ')' | '(' function_call_argument_list ')';
 function_call_by_name: '::' IDENTIFIER;
 function_call_argument_list: function_call_argument (',' function_call_argument)*;
@@ -209,7 +207,6 @@ function_call_argument: REF? expression | IDENTIFIER ':' REF? expression;
 argument_names: argument_name (',' argument_name)*;
 argument_name: IDENTIFIER ':_';
 
-
 explicit_member_callee: variable_expression
                       | literal_expression
                       | self_expression
@@ -217,7 +214,7 @@ explicit_member_callee: variable_expression
                       | tuple_expression;
 explicit_member_expression: explicit_member_callee ('?')? '.' function_call_expression
                           | explicit_member_callee ('?')? '.' DECIMAL_LITERAL
-                          | explicit_member_callee ('?')? '.' IDENTIFIER generic_parameter_clause?
+                          | explicit_member_callee ('?')? '.' IDENTIFIER
                           | explicit_member_callee ('?')? '.' IDENTIFIER '(' argument_names ')'
                           | explicit_member_callee ('?')? '.' self_expression
                           | explicit_member_callee ('?')? '.' superclass_expression
@@ -226,7 +223,7 @@ explicit_member_expression: explicit_member_callee ('?')? '.' function_call_expr
                           | explicit_member_callee '?:' expression
                           | explicit_member_expression ('?')? '.' function_call_expression
                           | explicit_member_expression ('?')? '.' DECIMAL_LITERAL
-                          | explicit_member_expression ('?')? '.' IDENTIFIER generic_parameter_clause?
+                          | explicit_member_expression ('?')? '.' IDENTIFIER
                           | explicit_member_expression ('?')? '.' IDENTIFIER '(' argument_names ')'
                           | explicit_member_expression ('?')? '.' self_expression
                           | explicit_member_expression ('?')? '.' superclass_expression
@@ -301,6 +298,7 @@ do_statement: 'do' code_block;
 
 declaration: constant_declaration
            | variable_declaration
+           | lateinit_var_declaration
            | typealias_declaration
            | function_declaration
            | enum_declaration
@@ -312,10 +310,13 @@ code_block: '{' statements? '}';
 
 constant_declaration: 'cst' pattern_initializer_list;
 pattern_initializer_list: pattern_initializer (',' pattern_initializer)*;
-pattern_initializer: pattern initializer?;
+pattern_initializer: simple_pattern_initializer | destruct_pattern_initializer;
+simple_pattern_initializer: identifier_pattern (initializer | type_annotation | type_annotation initializer);
+destruct_pattern_initializer: tuple_pattern type_annotation? initializer;
 initializer: '=' expression;
 
 variable_declaration: 'var' pattern_initializer_list;
+lateinit_var_declaration: 'late var' pattern_initializer_list;
 
 typealias_declaration: 'typealias' typealias_name generic_parameter_clause? typealias_assignment;
 typealias_name: IDENTIFIER;
@@ -331,7 +332,7 @@ function_result: ':' type;
 function_body: code_block;
 
 parameter_clause: '(' ')' | '(' parameter_list ')';
-parameter_list: parameter (',' parameter);
+parameter_list: parameter (',' parameter)*;
 parameter: parameter_name type_annotation default_argument_clause?;
 parameter_name: IDENTIFIER;
 default_argument_clause: '=' expression;
@@ -340,7 +341,7 @@ enum_declaration: 'enum' enum_name '{' enum_members '}';
 enum_members: enum_member+;
 enum_member: declaration | enum_case_clause;
 enum_case_clause: 'case' enum_case_list;
-enum_case_list: enum_case (',' enum_case);
+enum_case_list: enum_case (',' enum_case)*;
 enum_case: enum_case_name enum_assignment?;
 enum_assignment: '=' raw_value_literal;
 raw_value_literal: numeric_literal | boolean_literal;
@@ -391,12 +392,16 @@ as_pattern: 'as' type;
 
 member_pattern: identifier_pattern '.' IDENTIFIER
               | member_pattern '.' IDENTIFIER
+              | self_pattern '.' IDENTIFIER
+              | super_pattern '.' IDENTIFIER
               ;
 subscript_pattern: identifier_pattern '[' subscript ']'
                  | explicit_member_expression '[' subscript ']'
                  | subscript_pattern '[' expression ']';
 subscript: IDENTIFIER | DECIMAL_LITERAL;
 
+self_pattern: self_expression;
+super_pattern: superclass_expression;
 
 // Generic Parameters and Arguments
 

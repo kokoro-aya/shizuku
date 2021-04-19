@@ -1,0 +1,30 @@
+struct IntList(cst a: Int, cst b: IntList?)
+
+open struct Rectangle (cst a: Int, cst b: Int) {
+    cst size: () -> Int = { () ->
+        return self.a * self.b
+    }
+    cst print: () -> Void = { () ->
+        print("The surface of rectangle is", self.size())
+    }
+}
+
+struct Square(a: Int) ::: Rectangle {
+    init {
+        super(a, a)
+    }
+    cst print: () -> Void = { () ->
+        print("The surface of square is", super.size())
+    }
+}
+
+struct Foo(a: Int, cst b: Double) {
+    init {
+        print("Init-ing with value #", a)
+    }
+}
+/* will not achieve
+struct Bar(a: Int, b: Double, c: String) ::: A, B, C {
+    ::cst foo: Int = 3 // ::static, ## private
+}
+*/

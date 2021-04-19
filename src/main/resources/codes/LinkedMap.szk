@@ -1,0 +1,59 @@
+/*
+class impl Iterator<T> {
+  ...
+  #impl hasNext(): Bool
+  #impl next(): T
+}
+
+class impl Iterable<T> {
+  ...
+  #impl iterator(): Iterator<T> {
+  }
+  #impl add(data: T)
+}
+ */
+
+struct Pair<K,V>(cst key: K, cst value: V)
+
+struct LinkedMap<K,V>(size: Int, cst link: Array<LinkedList<Pair<K,V>?> > = []) ::: Iterable {
+  init {
+    for x in 1 ... size {
+      link.add(LinkedList<Pair<K,V> >())
+    }
+  }
+  cst hash: (K) -> Int = { (a: K) ->
+    if a is Int | Double | Bool | Character | String | Array {
+      return a.hash()
+    } else {
+      var b = 0
+      for x in a {
+        b = 31 * b + x.hash()
+      }
+      return b
+    }
+  }
+  cst add: (Pair<K,V>) -> Void = { (a: Pair<K,V>) ->
+    var hs = hash(a.key) % link.size()
+    if link[hs].head == nil || !link[hs].contains(a) {
+      link[hs].add(a)
+    }
+  }
+  cst containsKey: (K) -> Bool = { (a: K) ->
+    var hs = hash(a) % link.size()
+    var hd: Node<Pair<K,V> > = link[hs].head
+    while hd != nil && hd.data.key != a {
+      hd = hd.next
+    }
+    if hd == nil { return false }
+    else { return true }
+  }
+  cst get: (K) -> v? = { (a: K) ->
+    var hs = hash(a) % link.size()
+    var hd: Node<Pair<K,V> > = link[hs].head
+    while hd != nil && hd.data.key != a {
+      hd = hd.next
+    }
+    if hd == undefined { return nil }
+    else { return hd.data.value }
+  }
+}

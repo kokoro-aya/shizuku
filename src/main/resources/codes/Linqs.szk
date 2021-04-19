@@ -1,0 +1,26 @@
+struct List<T>(var a: T, var b: List<T>?) {
+    cst hasNext: () -> Bool = { () ->
+        return b == nil
+    }
+    cst next: () -> List<T>? = { () ->
+        return b
+    }
+}
+
+[
+    List(1, List(2, List(3, nil))),
+    List(2, List(4, nil)),
+    List(7, List(7, List(7, nil)))
+].map({(e: List) -> e.next() })
+
+func notNull(x: List): Bool {
+    return x != nil
+}
+
+[
+    List(2, nil),
+    nil,
+    List(2, List(3, List(4, nil))),
+    List(7, nil),
+    nil
+].filter(::notNull)

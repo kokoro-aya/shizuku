@@ -1,0 +1,35 @@
+struct BlackJackCard() {
+  enum Suit {
+    case spades = 1, hearts = 2, diamonds = 3, clubs = 4
+  }
+  enum Rank {
+    case two = 2, three, four, five, six, seven, eight, nine, ten
+    case jack, queen, king, ace
+
+    struct Values(cst first: Int, cst second: Int?)
+
+    cst values: () -> Values = { () ->
+      switch self {
+        case Rank.ace: {
+          return Values(1, 11)
+        }
+        case Rank.jack: {
+          return Values(10, nil)
+        }
+        default: {
+          return Values(self.rawValue, nil)
+        }
+      }
+    }
+    cst rank: Rank = Rank.five
+    cst suit: Suit = Suit.spade
+    cst toString: () -> String = { () ->
+      var output = ""suit is \({suit.rawValue}),"" ++
+      ""value is \({rank.value.first})""
+      if cst second = rank.values().second {
+        output += ""or \({second})""
+      }
+      return output
+    }
+  }
+}
