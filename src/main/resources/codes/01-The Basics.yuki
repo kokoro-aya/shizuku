@@ -1,0 +1,225 @@
+/* Constants and Variables */
+
+cst maximumNumberOfLoginAttempts = 10
+var currentLoginAttempt = 0
+
+var x = 0.0, y = 1.1, z = 2.2
+
+
+/* Type Annotations */
+
+var welcomeMessage: String
+
+welcomeMessage = "Hello"
+
+var red: Double, green: Double, blue: Double
+
+
+/* Naming Constants and Variables */
+
+cst π = 3.14159
+cst 你好 = "你好世界"
+cst 🐶🐮 = "dogcow"
+
+var friendlyWelcome = "Hello!"
+friendlyWelcome = "Bonjour!"
+
+cst languageName = "Yuki"
+languageName = "Yuki++"
+
+
+/* Printing Constants and Variables */
+
+print(friendlyWelcome)
+
+print(""The current value of friendlyWelcome is \({friendlyWelcome})"")
+
+
+/* Comments */
+
+// This is a comment.
+
+/* This is also a comment
+ but is written over multiple lines. */
+
+
+/* Semicolons */
+
+cst cat = "🐱"; print(cat)
+
+
+/* Integers */
+
+cst minValue = Int.min
+cst maxValue = Int.max
+
+
+/* Floating Point Numbers */
+
+
+/* Type Safety and Type Inference */
+
+cst meaningOfLife = 42
+// meaningOfLife is inferred to be of type Int
+cst pi = 3.14159
+// pi is inferred to be of type Double
+cst anotherPi = 3 + 0.14159
+// anotherPi is also inferred to be of type Double
+
+
+/* Numeric Literals */
+/*
+cst decimalInteger = 17
+cst binaryInteger = 0b10001   // 17
+cst octalInteger = 0o21       // 17
+cst hexadecimalInteger = 0x11 // 17
+
+cst decimalDouble = 12.1875
+cst exponentDouble = 1.21875e1
+
+cst paddedDouble = 000123.456
+cst oneMillion = 1_000_000
+cst justOverOneMillion = 1_000_000.000_000_1
+ */
+
+
+/* Numeric Type Conversion */
+
+/*
+cst cannotBeNegative: UInt = -1
+
+cst twoThousand: UInt = 2_000
+cst one: Int = 1
+cst twoThousandAndOne = twoThousand + UInt(one) // Cannot apply + to Int and UInt
+ */
+
+cst three = 3
+cst pointOneFourOneFiveNine = 0.14159
+cst pi = Double(three) + pointOneFourOneFiveNine
+// pi == 3.14159, and is inferred to be of type Double
+
+cst integerPi = Int(pi)
+// integerPi == 3, and is inferred to be of type Int
+
+
+/* Type Aliases */
+
+typealias AudioSample = UInt
+var maxAmplitudeFound = AudioSample.min // maxAmplitudeFound is now 0
+
+
+/* Booleans */
+
+cst orangesAreOrange = true
+cst turnipsAreDelicious = false
+
+if turnipsAreDelicious {
+    print("Mmm, tasty turnips!")
+} else {
+    print("Eww, turnips are horrible.")
+}
+
+cst i = 1
+if i {
+    // this example will not compile, and will report an error
+}
+
+cst j = 1
+if j == 1 {
+    // this example will compile successfully
+}
+
+
+/* Tuples */
+
+cst http404Error = Pair(404, "Not Found")
+// http404Error is of type (Int, String) and equals (404, "Not Found")
+
+cst (statusCode, statusMessage) = http404Error
+print(""The status code is \({statusCode})"")
+// Prints "The status code is 404"
+print(""The status message is \({statusMessage})"")
+// Prints "The status message is Not Found"
+
+cst (justTheStatusCode, _) = http404Error
+print(""The status code is \({justTheStatusCode})"")
+// Prints "The status code is 404"
+
+print(""The status code is \({http404Error.first})"")
+// Prints "The status code is 404"
+print(""The status message is \({http404Error.second})"")
+// Prints "The status message is Not Found"
+
+
+/* Optionals */
+
+cst possibleNumber = "123"
+cst convertedNumber = Int(possibleNumber)
+// convertedNumber is inferred to be of type "Int?" or "optional Int"
+
+var serverResponseCode: Int? = 404
+// serverResponseCode contains an actual Int value of 404
+serverResponseCode = nil
+// serverResponseCode now contains no value
+
+var surveyAnswer: String?
+// surveyAnswer is automatically set to nil
+
+
+if convertedNumber != nil {
+    print("convertedNumber contains some integer value.")
+}
+
+if convertedNumber != nil {
+    print(""convertedNumber has an integer value of \({convertedNumber!!})."")
+}
+
+// Optional Binding
+
+if cst actualNumber = Int(possibleNumber) {
+    print("The string", possibleNumber, "has an integer value of", actualNumber)
+} else {
+    print("The string", possibleNumber, "could not be converted to an integer")
+}
+// Prints "The string "123" has an integer value of 123"
+
+if cst firstNumber = Int("4"), cst secondNumber = Int("42"), firstNumber < secondNumber && secondNumber < 100 {
+    print(firstNumber, "<", secondNumber, "< 100")
+} // Prints "4 < 42 < 100"
+
+if cst firstNumber = Int("4") {
+    if cst secondNumber = Int("42") {
+        if firstNumber < secondNumber && secondNumber < 100 {
+            print(firstNumber, "<", secondNumber, "< 100")
+        }
+    }
+} // Prints "4 < 42 < 100"
+
+// Implicitly Unwrapped Optionals
+/*
+cst possibleString: String? = "An optional string."
+cst forcedString: String = possibleString!!
+
+cst assumedString: String! = "An implicitly unwrapped optional string."
+cst implicitString: String = assumedString // no need for an exclamation
+ */
+
+
+/* Assertions and Preconditions */
+
+cst age = -3
+assert age >= 0, "A person's age can't be less than zero"
+// This assertion fails because -3 isn't >= 0
+
+assert age >= 0
+
+if age > 10 {
+    print("You can ride the roller-coaster or the ferris wheel.")
+} else if age >= 0 {
+    print("You can ride the ferris wheel.")
+} else {
+    assertionFailure("A person's age can't be less than zero.")
+}
+
+// In the implementation of a subscript...
+precondition(index > 0, "Index must be greater than zero.")

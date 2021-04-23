@@ -1,0 +1,63 @@
+cst a: Optional<Int> = nil
+var b: Int? = 2
+b = nil
+late cst c: Optional<Double>
+c = 5.5
+
+var b: Int?? = Optional.of(Optional.of(2))
+var c: Int = b?.unsafeGet()?.unsafeGet()
+
+print(c.add(4))
+print(b?.unsafeGet()?.add(5) ?: "nothing here")
+
+
+var numbers = [1, 2, 3]
+cst index = numbers.find(4) // Optional<Int>
+
+switch index {
+    case cst index? => {
+        numbers.remove(at: index)
+    }
+    case nil => {
+        print("Not exist")
+    }
+}
+
+if cst number = number, number % 2 != 0 {
+    print(number)
+}
+
+if cst url = URL(string: imageUrl),
+   url.pathExtension == "jpg",
+   cst data = Data(contentsOf: url),
+   cst image = UIImage(data: data) {
+      cst view = UIImageView(image: image)
+}
+
+
+var userInput: String? = nil
+cst username = userInput ?: "Mars"
+
+cst a: String? = nil
+cst b: String? = nil
+cst c: String? = "C"
+
+cst theFirstNonNilString = a ?: b ?: c
+cst inStringType = a ?: b ?: "C"
+
+if cst theFirstNonNilString = a ?: b ?: c {
+    print(theFirstNonNilString)
+}
+
+cst one: Int?? = nil
+cst two: Int? = 2
+cst three: Int? = 3
+
+one ?: two ?: three
+
+
+func Sequence.myFlatMap<T>(transform: (Iterator.Element) -> T?): [T] {
+    return self.map(transform)
+        .filter({(e: T?) -> e != nil})
+        .map({(e: T) -> e !!})
+}

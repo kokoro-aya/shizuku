@@ -32,6 +32,8 @@ struct LinkedList<T>(
                 }
                 if tmp == nil { return }
                 prev.next = tmp.next
+            }
+        }
         struct Iterator() {
             cst hasNext: () -> Bool = { () ->
                 curr != nil

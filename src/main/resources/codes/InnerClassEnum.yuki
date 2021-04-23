@@ -10,10 +10,10 @@ struct BlackJackCard() {
 
     cst values: () -> Values = { () ->
       switch self {
-        case Rank.ace: {
+        case Rank.ace => {
           return Values(1, 11)
         }
-        case Rank.jack: {
+        case Rank.jack => {
           return Values(10, nil)
         }
         default: {

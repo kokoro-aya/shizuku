@@ -1,13 +1,30 @@
 
-grammar shizuku;
+grammar yuki;
 
 top_level: statements? EOF;
 
 // Lexical Part
 
 IDENTIFIER: IDENT_HEAD IDENT_CHAR*;
-fragment IDENT_HEAD: [a-z] | [A-Z] | '_';
-fragment IDENT_CHAR: [0-9] | IDENT_HEAD;
+fragment IDENT_HEAD: [A-Z] | [a-z]
+                   | '_'
+                   | '\u00a8' .. '\u00aa' | '\u00ad' .. '\u00af' | '\u00b2' .. '\u00b5' | '\u00b7' .. '\u00ba'
+                   | '\u00bc' .. '\u00be' | '\u00c0' .. '\u00d6' | '\u00d8' .. '\u00f6' | '\u00f8' .. '\u00ff'
+                   | '\u0100' .. '\u02ff' | '\u0370' .. '\u167f' | '\u1681' .. '\u180d' | '\u180f' .. '\u1dbf'
+                   | '\u1e00' .. '\u1fff'
+                   | '\u200b' .. '\u200d' | '\u202a' .. '\u202e' | '\u203f' .. '\u2040' | '\u2054' | '\u2060' .. '\u206f'
+                   | '\u2070' .. '\u20cf' | '\u2100' .. '\u218f' | '\u2460' .. '\u24ff' | '\u2776' .. '\u2793'
+                   | '\u2c00' .. '\u2dff' | '\u2e80' .. '\u2fff'
+                   | '\u3004' .. '\u3007' | '\u3021' .. '\u302f' | '\u3031' .. '\u303f' | '\u3040' .. '\ud7ff'
+                   | '\uf900' .. '\ufd3d' | '\ufd40' .. '\ufdcf' | '\ufdf0' .. '\ufe1f' | '\ufe30' .. '\ufe44'
+                   | '\ufe47' .. '\ufffd'
+                   | '\u{10000}' .. '\u{1fffd}' | '\u{20000}' .. '\u{2fffd}' | '\u{30000}' .. '\u{3fffd}' | '\u{40000}' .. '\u{4fffd}'
+                   | '\u{50000}' .. '\u{5fffd}' | '\u{60000}' .. '\u{6fffd}' | '\u{70000}' .. '\u{7fffd}' | '\u{80000}' .. '\u{8fffd}'
+                   | '\u{90000}' .. '\u{9fffd}' | '\u{a0000}' .. '\u{afffd}' | '\u{b0000}' .. '\u{bfffd}' | '\u{c0000}' .. '\u{cfffd}'
+                   | '\u{d0000}' .. '\u{dfffd}' | '\u{e0000}' .. '\u{efffd}' ;
+fragment IDENT_CHAR: [0-9]
+                   | '\u0300' .. '\u036f' | '\u1dc0' .. '\u1dff' | '\u20d0' .. '\u20ff' | '\ufe20' .. '\ufe2f'
+                   | IDENT_HEAD;
 
 DECIMAL_LITERAL: DECIMAL_DIGIT+;
 fragment DECIMAL_DIGIT: '0' .. '9';
@@ -17,7 +34,7 @@ fragment ESC: '\\' | '\\\\';
 
 STRING_HEAD: '""' (ESC|~[\\(){}])*? '\\({';
 STRING_INTERM: '})' (ESC|~[\\(){}])*? '\\({';
-STRING_END: '})' (ESC|~[\\()]{})*? '""';
+STRING_END: '})' (ESC|~[\\(){}])*? '""';
 
 CHARACTER_LITERAL: '\'' CHAR '\'';
 fragment CHAR: ~['"\\EOF\n];
@@ -74,7 +91,7 @@ MIXINS: ':::';
 // Literals
 
 literal: numeric_literal | boolean_literal | char_sequence_literal | nil_literal;
-numeric_literal: '-'? (integer_literal | double_literal);
+numeric_literal: (ADD | SUB)? (integer_literal | double_literal);
 boolean_literal: 'true' | 'false';
 char_sequence_literal: string_literal | CHARACTER_LITERAL;
 nil_literal: 'nil';
@@ -143,8 +160,10 @@ expression:
           | function_call_expression
           | parenthesized_expression
           | wildcard_expression
+          | spread_expression
           // Binary Expressions
           | NOT expression
+          | (ADD | SUB) expression
           | expression op=('<<' | '>>') expression
           | expression op=(MUL | DIV | MOD) expression
           | expression op=(ADD | SUB) expression
@@ -173,10 +192,10 @@ variable_expression: IDENTIFIER (':' type)?;
 
 literal_expression: literal | array_literal | map_literal;
 
-array_literal: '[' ']' | '[' array_literal_item (',' array_literal_item)* ']';
+array_literal: '[' ']' | '[' array_literal_item (',' array_literal_item)* ','? ']';
 array_literal_item: expression;
 
-map_literal: '[' map_literal_item (',' map_literal_item)* ']' | '[' ':' ']';
+map_literal: '[' map_literal_item (',' map_literal_item)* ','? ']' | '[' ':' ']';
 map_literal_item: expression ':' expression;
 
 
@@ -197,8 +216,12 @@ tuple_element: expression | IDENTIFIER ':' expression;
 
 wildcard_expression: '_';
 
+spread_expression: '...' expression;
 
-function_call_expression: function_name generic_argument_clause? function_call_argument_clause;
+
+function_call_expression: function_name generic_argument_clause? function_call_argument_clause
+                        | function_name generic_argument_clause? code_block
+                        ;
 function_call_argument_clause: '(' ')' | '(' function_call_by_name ')' | '(' function_call_argument_list ')';
 function_call_by_name: '::' IDENTIFIER;
 function_call_argument_list: function_call_argument (',' function_call_argument)*;
@@ -270,10 +293,12 @@ switch_statement: 'switch' expression '{' switch_cases? '}';
 switch_cases: switch_case+;
 switch_case: case_label code_block
            | default_label code_block;
-case_label: 'case' case_item_list ':';
+case_label: 'case' case_item_list '=>';
 case_item_list: case_item(',' case_item)*;
-case_item: pattern where_clause?;
-default_label: 'default' ':';
+case_item: (pattern | literal) where_clause? | nil_case_item;
+default_label: 'default' '=>';
+
+nil_case_item: nil_literal;
 
 where_clause: 'where' where_expression;
 where_expression: expression;
@@ -288,7 +313,7 @@ return_statement: 'return' expression?;
 throw_statement: 'throw' expression;
 yield_statement: 'yield' expression;
 
-assert_statement: 'assert' expression;
+assert_statement: 'assert' expression (',' expression)?;
 
 do_statement: 'do' code_block;
 
@@ -380,7 +405,7 @@ identifier_pattern: IDENTIFIER;
 value_binding_pattern: 'var' pattern | 'cst' pattern;
 
 tuple_pattern: '(' ')' | '(' tuple_pattern_element (',' tuple_pattern_element)* ')';
-tuple_pattern_element: pattern;
+tuple_pattern_element: pattern | literal;
 
 enum_case_pattern: type_identifier '.' enum_case_name;
 
@@ -397,8 +422,15 @@ member_pattern: identifier_pattern '.' IDENTIFIER
               ;
 subscript_pattern: identifier_pattern '[' subscript ']'
                  | explicit_member_expression '[' subscript ']'
-                 | subscript_pattern '[' expression ']';
-subscript: IDENTIFIER | DECIMAL_LITERAL;
+                 | subscript_pattern '[' subscript ']';
+subscript: IDENTIFIER | DECIMAL_LITERAL | reverse_subscript | slice_subscript | expression;
+reverse_subscript: '^' expression;
+slice_subscript: slice_subscript_part '..' slice_subscript_part
+               | '..' slice_subscript_part
+               | slice_subscript_part '..'
+               ;
+slice_subscript_part: reverse_subscript | expression;
+
 
 self_pattern: self_expression;
 super_pattern: superclass_expression;
