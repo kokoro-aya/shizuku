@@ -50,8 +50,8 @@ cst cat = "🐱"; print(cat)
 
 /* Integers */
 
-cst minValue = Int.min
-cst maxValue = Int.max
+cst minValue = Int::min
+cst maxValue = Int::max
 
 
 /* Floating Point Numbers */
@@ -105,7 +105,7 @@ cst integerPi = Int(pi)
 /* Type Aliases */
 
 typealias AudioSample = UInt
-var maxAmplitudeFound = AudioSample.min // maxAmplitudeFound is now 0
+var maxAmplitudeFound = AudioSample::min // maxAmplitudeFound is now 0
 
 
 /* Booleans */

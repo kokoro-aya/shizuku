@@ -5,6 +5,7 @@ top_level: statements? EOF;
 
 // Lexical Part
 
+T_IDENTIFIER: [A-Z] IDENT_CHAR*;
 IDENTIFIER: IDENT_HEAD IDENT_CHAR*;
 fragment IDENT_HEAD: [A-Z] | [a-z]
                    | '_'
@@ -26,10 +27,21 @@ fragment IDENT_CHAR: [0-9]
                    | '\u0300' .. '\u036f' | '\u1dc0' .. '\u1dff' | '\u20d0' .. '\u20ff' | '\ufe20' .. '\ufe2f'
                    | IDENT_HEAD;
 
-DECIMAL_LITERAL: DECIMAL_DIGIT+;
+BINARY_LITERAL: '0b' BINARY_DIGIT (BINARY_DIGIT | '_')*;
+fragment BINARY_DIGIT: '0' | '1';
+
+DECIMAL_LITERAL: DECIMAL_DIGIT (DECIMAL_DIGIT | '_')*;
 fragment DECIMAL_DIGIT: '0' .. '9';
 
-STATIC_STRING_LITERAL: '"' (ESC|.)*? '"';
+HEXADECIMAL_LITERAL: '0x' HEXADECIMAL_DIGIT (HEXADECIMAL_DIGIT | '_')*;
+fragment HEXADECIMAL_DIGIT: DECIMAL_DIGIT | [A-F] | [a-f];
+
+OCTAL_LITERAL: '0o' OCTAL_DIGIT (OCTAL_DIGIT | '_')*;
+fragment OCTAL_DIGIT: '0' .. '7';
+
+MULTILINE_STRING_LITERAL: '"""' (ESC | .)*? '"""';
+
+STATIC_STRING_LITERAL: '"' (ESC | .)*? '"';
 fragment ESC: '\\' | '\\\\';
 
 STRING_HEAD: '""' (ESC|~[\\(){}])*? '\\({';
@@ -38,6 +50,8 @@ STRING_END: '})' (ESC|~[\\(){}])*? '""';
 
 CHARACTER_LITERAL: '\'' CHAR '\'';
 fragment CHAR: ~['"\\EOF\n];
+
+UNICODE_LITERAL: '`\\u' HEXADECIMAL_DIGIT+ '`';
 
 COMMENT: '//' ~('\r' | '\n')* -> skip;
 MULTILINE_COMMENT: '/*' .*? '*/' -> skip;
@@ -93,14 +107,14 @@ MIXINS: ':::';
 literal: numeric_literal | boolean_literal | char_sequence_literal | nil_literal;
 numeric_literal: (ADD | SUB)? (integer_literal | double_literal);
 boolean_literal: 'true' | 'false';
-char_sequence_literal: string_literal | CHARACTER_LITERAL;
+char_sequence_literal: string_literal | CHARACTER_LITERAL | UNICODE_LITERAL;
 nil_literal: 'nil';
 
-integer_literal: DECIMAL_LITERAL;
+integer_literal: DECIMAL_LITERAL | HEXADECIMAL_LITERAL | OCTAL_LITERAL | BINARY_LITERAL;
 double_literal: DECIMAL_LITERAL '.' DECIMAL_LITERAL?
               | DECIMAL_LITERAL? '.' DECIMAL_LITERAL
               ;
-string_literal: STATIC_STRING_LITERAL | interpolated_string_literal;
+string_literal: MULTILINE_STRING_LITERAL | STATIC_STRING_LITERAL | interpolated_string_literal;
 interpolated_string_literal: STRING_HEAD expression (STRING_INTERM expression)* STRING_END;
 
 
@@ -124,7 +138,7 @@ type_annotation: ':' type;
 type_identifier: type_name generic_argument_clause?
                | type_name generic_argument_clause? '.' type_identifier;
 
-type_name: IDENTIFIER;
+type_name: T_IDENTIFIER;
 
 tuple_type: '(' ')' | '(' tuple_type_element (',' tuple_type_element)* ')';
 tuple_type_element: element_name type_annotation | type;
@@ -151,6 +165,7 @@ type_inheritance_clause: MIXINS type_identifier (',' type_identifier)*;
 expression:
           // Postfix expressions aka explicit member expressions
             explicit_member_expression
+          | static_member_expression
           // Primary Expressions
           | variable_expression
           | literal_expression
@@ -158,6 +173,7 @@ expression:
           | superclass_initialization_expression
           | closure_expression
           | function_call_expression
+          | struct_construct_expression
           | parenthesized_expression
           | wildcard_expression
           | spread_expression
@@ -222,13 +238,14 @@ spread_expression: '...' expression;
 function_call_expression: function_name generic_argument_clause? function_call_argument_clause
                         | function_name generic_argument_clause? code_block
                         ;
+struct_construct_expression: struct_name generic_argument_clause? function_call_argument_clause;
 function_call_argument_clause: '(' ')' | '(' function_call_by_name ')' | '(' function_call_argument_list ')';
 function_call_by_name: '::' IDENTIFIER;
 function_call_argument_list: function_call_argument (',' function_call_argument)*;
 function_call_argument: REF? expression | IDENTIFIER ':' REF? expression;
 
 argument_names: argument_name (',' argument_name)*;
-argument_name: IDENTIFIER ':_';
+argument_name: IDENTIFIER? ':_';
 
 explicit_member_callee: variable_expression
                       | literal_expression
@@ -254,7 +271,10 @@ explicit_member_expression: explicit_member_callee ('?')? '.' function_call_expr
                           | explicit_member_expression '!!'
                           | explicit_member_expression '?:' expression
                           ;
-
+static_member_expression: type '::' IDENTIFIER
+                        | type '::' IDENTIFIER '(' argument_names ')'
+                        | type '::' function_call_expression
+                        ;
 
 
 // Statements
@@ -324,30 +344,58 @@ do_statement: 'do' code_block;
 declaration: constant_declaration
            | variable_declaration
            | lateinit_var_declaration
+           | computed_var_declaration
            | typealias_declaration
            | function_declaration
            | enum_declaration
            | struct_declaration
+           | prototype_declaration
+           | extension_declaration
            | initializer_declaration
            ;
 
 code_block: '{' statements? '}';
 
-constant_declaration: 'cst' pattern_initializer_list;
+constant_declaration: 'cst' pattern_initializer_list
+                    | 'cst' constant_name type_annotation? initializer getter_block;
 pattern_initializer_list: pattern_initializer (',' pattern_initializer)*;
 pattern_initializer: simple_pattern_initializer | destruct_pattern_initializer;
 simple_pattern_initializer: identifier_pattern (initializer | type_annotation | type_annotation initializer);
 destruct_pattern_initializer: tuple_pattern type_annotation? initializer;
 initializer: '=' expression;
 
-variable_declaration: 'var' pattern_initializer_list;
-lateinit_var_declaration: 'late var' pattern_initializer_list;
+variable_declaration: 'var' pattern_initializer_list // must be [identifier_pattern]
+                    | 'var' variable_name type_annotation getter_setter_block
+                    | 'var' variable_name type_annotation get_set_block
+                    | 'var' variable_name type_annotation
+                    ;
+                    // Should not have getter_setter_block if out of struct
+lateinit_var_declaration: 'late var' pattern_initializer_list
+                        | 'late var' variable_name type_annotation getter_setter_block
+                        | 'late var' variable_name type_annotation get_set_block
+                        | 'late var' variable_name type_annotation
+                        ;
+computed_var_declaration: 'comp var' variable_name type_annotation getter_setter_block;
+
+getter_block: '{' getter_clause '}';
+getter_setter_block: '{' getter_clause setter_clause? '}'
+                   | '{' setter_clause getter_clause '}'
+                   ;
+getter_clause: 'get' code_block;
+setter_clause: 'set' setter_name? code_block;
+get_set_block: '{' 'get' 'set'? '}'
+             | '{' 'set' 'get' '}'
+             ;
+setter_name: '(' IDENTIFIER ')';
+
+constant_name: IDENTIFIER;
+variable_name: IDENTIFIER;
 
 typealias_declaration: 'typealias' typealias_name generic_parameter_clause? typealias_assignment;
-typealias_name: IDENTIFIER;
+typealias_name: T_IDENTIFIER;
 typealias_assignment: '=' type;
 
-function_declaration: function_head (extension_type '.')? function_name generic_parameter_clause? function_signature function_body?;
+function_declaration: function_head (type MIXINS extension_type '.')? function_name generic_parameter_clause? function_signature function_body?;
 function_head: 'func';
 extension_type: type;
 function_name: IDENTIFIER;
@@ -358,24 +406,26 @@ function_body: code_block;
 
 parameter_clause: '(' ')' | '(' parameter_list ')';
 parameter_list: parameter (',' parameter)*;
-parameter: parameter_name type_annotation default_argument_clause?;
+parameter: default_name? REF? parameter_name type_annotation default_argument_clause?;
+default_name: '_';
 parameter_name: IDENTIFIER;
 default_argument_clause: '=' expression;
 
-enum_declaration: 'enum' enum_name '{' enum_members '}';
+enum_declaration: 'enum' enum_name type_inheritance_clause? '{' enum_members '}';
 enum_members: enum_member+;
 enum_member: declaration | enum_case_clause;
 enum_case_clause: 'case' enum_case_list;
 enum_case_list: enum_case (',' enum_case)*;
 enum_case: enum_case_name enum_assignment?;
-enum_assignment: '=' raw_value_literal;
-raw_value_literal: numeric_literal | boolean_literal;
-enum_name: IDENTIFIER;
+enum_assignment: '=' literal;
+enum_name: T_IDENTIFIER;
 enum_case_name: IDENTIFIER;
 
-struct_declaration: open? 'struct' struct_name generic_parameter_clause? struct_primary_initializer type_inheritance_clause? struct_body?;
-open: 'open';
-struct_name: IDENTIFIER;
+struct_declaration: struct_modifiers? 'struct' struct_name generic_parameter_clause? struct_primary_initializer type_inheritance_clause? struct_body?;
+struct_modifiers: struct_modifier+;
+struct_modifier: 'open' | 'partial';
+
+struct_name: T_IDENTIFIER;
 struct_body: '{' declaration+ '}';
 
 struct_primary_initializer: '(' struct_primary_parameter_list? ')';
@@ -384,7 +434,24 @@ struct_primary_parameter: ('cst'|'var'|) REF? parameter default_argument_clause?
 
 initializer_declaration: 'init' code_block;
 
+prototype_declaration: 'prototype' prototype_name prototype_body;
+prototype_name: T_IDENTIFIER;
+prototype_body: '{' prototype_member_declaration+ '}';
+prototype_member_declaration: prototype_property_declaration
+                            | prototype_computed_property_declaration
+                            | prototype_method_declaration;
+prototype_property_declaration: 'var' variable_name type_annotation prototype_property_implementation;
+prototype_computed_property_declaration: 'comp var' variable_name type_annotation prototype_computed_property_implementation;
+prototype_method_declaration: function_head function_name generic_parameter_clause? function_signature prototype_method_implementation?;
+prototype_property_implementation: 'internal' | 'default' initializer (getter_setter_block | get_set_block)?;
+prototype_computed_property_implementation: 'internal' | 'default' getter_setter_block | get_set_block;
+prototype_method_implementation: 'internal' | 'default' function_body;
 
+extension_declaration: 'extension' type type_inheritance_clause extension_body;
+extension_body: '{' extension_member+ '}';
+extension_member: computed_var_declaration
+                | function_declaration
+                | variable_declaration;
 
 // Patterns
 
