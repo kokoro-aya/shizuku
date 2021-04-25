@@ -1,0 +1,70 @@
+/* Defining a Base Class */
+
+struct Vehicle () {
+  var currentSpeed = 0.0 { get set }
+  var description: String {
+    return ""traveling at \({currentSpeed}) miles per hour""
+  }
+  func makeNoise() { /* do nothing */ }
+  // an arbitrary vehicle doesn't necessarily make a noise
+}
+
+cst someVehicle = Vehicle()
+print(""Vehicle: \({someVehicle.description})"")
+
+
+/* Subclassing */
+
+struct SomeSubClass() ::: SomeSuperClass {
+  cst foo = 3 /* subclass definition goes here */
+}
+struct Bicycle() ::: Vehicle {
+  var hasBasket = false { get set }
+}
+
+cst bicycle = Bicycle()
+bicycle.hasBasket = true
+bicycle.currentSpeed = 15.0
+print(""Bicycle: \({bicycle.description})"")
+// Bicycle: traveling at 15.0 miles per hour
+
+struct Tandem() ::: Bicycle {
+  var currentNumberOfPassengers = 0
+}
+
+cst tandem = Tandem()
+tandem.hasBasket = true
+tandem.currentNumberOfPassengers = 2
+tandem.currentSpeed = 22.0
+print(""Tandem: \({tandem.description})"")
+// Tandem: traveling at 22.0 miles per hour
+
+
+/* Overriding */
+
+// Accessing Superclass Methods, Properties and Subscripts
+
+// Overriding Methods
+
+struct Train() ::: Vehicle {
+  func makeNoise() { print("Choo Choo") }
+}
+cst train = Train()
+train.makeNoise() // Prints "Choo Choo"
+
+// Overriding Properties
+
+/// Overriding Property Getters and Setters
+struct Car() ::: Vehicle {
+  var gear = 1
+  var description: String {
+    return super.description ++ "" in gear \({gear})""
+  }
+}
+
+cst car = Car()
+car.currentSpeed = 25.0
+car.gear = 3
+print(""Car: \({car.description})"")
+// Car: traveling at 25.0 miles per hour in gear 3
+

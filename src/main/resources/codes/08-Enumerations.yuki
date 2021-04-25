@@ -1,0 +1,111 @@
+/* Enumeration Syntax */
+
+enum SomeEnumeration {
+  /* Enumeration definition goes here */
+  case something
+}
+
+enum CompassPoint {
+  case north
+  case south
+  case east
+  case west
+}
+
+enum Planet {
+  case mercury, venus, earth, mars, jupiter, saturn, uranus, neptune,
+}
+
+var directionToHead = CompassPoint.west
+
+
+/* Matching Enumeration Values with a Switch Statement */
+
+directionToHead = CompassPoint.south
+switch directionToHead {
+  case CompassPoint.north => {
+    print("Lots of planets have a north")
+  }
+  case CompassPoint.south => {
+    print("Watch out for penguins")
+  }
+  case CompassPoint.east => {
+    print("Where the sun rises")
+  }
+  case CompassPoint.west => {
+    print("Where the skies are blue")
+  }
+}
+
+cst somePlanet = Planet.earth
+switch somePlanet {
+  case Planet.earth => {
+    print("Mostly harmless")
+  }
+  default => {
+    print("Not a safe place for humans")
+  }
+}
+
+
+/* Iterating over Enumeration Cases */
+
+enum Beverage ::: CaseIterable { // !!! Should we declare as extension?
+  case coffee, tea, juice
+}
+cst numberOfChoices = Beverage.allCases.count
+print(""\({numberOfChoices}) beverages available"")
+// Prints "3 beverages available"
+
+for beverage in Beverage.allCases {
+    print(beverage)
+}
+// coffee
+// tea
+// juice
+
+
+/* Raw Values */
+
+enum ASCIIControlCharacter ::: Character {
+  case tab = "\t"
+  case lineFeed = "\n"
+  case carrageReturn = "\r"
+}
+
+// Implicitly Assigned Raw Values
+
+enum Planet::: Int {
+  case mercury = 1, venus, earth, mars, jupiter, saturn, uranus, neptune
+}
+
+enum CompassPoint::: String {
+    case north, south, east, west
+} // CompassPoint.south -> "south"
+
+cst earthsOrder = Planet.earth.rawValue
+// earthsOrder is 3
+
+cst sunsetDirection = CompassPoint.west.rawValue
+// sunsetDirection is "west"
+
+// Initializing from a Raw Value
+
+cst possiblePlanet = Planet(rawValue: 7)
+// possiblePlanet is of type Planet? and equals Planet.uranus
+
+cst positionToFind = 11
+if cst somePlanet = Planet(rawValue: positionToFind) {
+    switch somePlanet {
+        case Planet.earth => {
+            print("Mostly harmless")
+        }
+        default => {
+            print("Not a safe place for humans")
+        }
+    }
+} else {
+    print(""There isn't a planet at position \({positionToFind})"")
+}
+// Prints "There isn't a planet at position 11"
+

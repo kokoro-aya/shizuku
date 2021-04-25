@@ -1,0 +1,107 @@
+/* Instance Methods */
+
+struct Counter() {
+  var count = 0
+  func increment() { count += 1 }
+  func increment(by: Int) { count += amount }
+  func reset() { count = 0 }
+}
+
+cst counter = Counter() // the initial counter value is 0
+counter.increment() // the counter's value is now 1
+counter.increment(by: 5) // the counter's value is now 6
+counter.reset() // the counter's value is now 0
+
+// The self Property
+
+func increment() { self.count += 1 }
+
+struct Point(var x: Double = 0.0, var y: Double = 0.0) {
+  func isToTheRightOf(x: Double): Bool {
+    return self.x > x
+  }
+}
+cst somePoint = Point(x: 4.0, y: 5.0)
+if somePoint.isToTheRightOf(x: 1.0) {
+  print("This point is to the right of the line where x == 1.0")
+}
+// Prints "This point is to the right of the line where x == 1.0"
+
+// Assigning to Self (!!! Only in Enum??)
+// !!! do we need imply mutating?
+/*
+struct Point(var x: Double = 0.0, var y: 0.0) {
+  func moveBy(deltaX: Double, deltaY: Double) {
+    self = Point(x: x + deltaX, y: y + deltaY)
+  }
+}*/ // Only to value type!
+
+enum TriStateSwitch {
+  case off, low, high
+  func next() {
+    switch self {
+      case ::off => {
+        self = ::low
+      }
+      case ::low => {
+        self = ::high
+      }
+      case ::high => {
+        self = ::off
+      }
+    }
+  }
+}
+
+var ovenLight = TriStateSwitch.low
+ovenLight.next()
+// ovenLight is now equal to .high
+ovenLight.next()
+// ovenLight is now equal to .off
+
+
+/* Type Methods */
+
+struct SomeClass() {
+  static func someTypeMethod() { /* type method impl goes here */ }
+}
+SomeClass::someTypeMethod()
+
+struct LevelTracker() {
+  static var highestUnlockedLevel = 1 { get }
+  var currentLevel = 1
+
+  static func unlock(_ level: Int) {
+    if level > highestUnlockedLevel { highestUnlockedLevel = level }
+  }
+  static func isUnlocked(_ level: Int): Bool {
+    return level <= highestUnlockedLevel
+  }
+  func advance(to: Int): Bool {
+    if LevelTracker::isUnlocked(level) {
+      currentLevel = level
+      return true
+    } else {
+      return false
+    }
+  }
+}
+
+struct Player(var tracker: LevelTracker = LevelTracker(), cst playerName: String) {
+  func complete(level: Int) {
+    LevelTracker::unlock(level + 1)
+    tracker.advance(to: level + 1)
+  }
+}
+
+var player = Player(name: "Argyrios")
+player.complete(level: 1)
+print(""highest unlocked level is now \({LevelTracker::highestUnlockedLevel})"")
+// Prints "highest unlocked level is now 2"
+
+player = Player(name: "Beto")
+if player.tracker.advance(to: 6) {
+  print("player is now on level 6")
+} else {
+  print("level 6 hasn't yet been unlocked")
+}

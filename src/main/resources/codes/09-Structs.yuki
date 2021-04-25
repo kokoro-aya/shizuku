@@ -1,0 +1,67 @@
+// Defining Struct
+
+struct Resolution(var width: Int = 0, var height: Int = 0)
+
+struct VideoMode(var resolution: Resolution = Resolution(), var interlaced: Bool = false, var frameRate: Double = 0.0, var name: String?)
+
+// Struct Instances
+
+cst someResolution = Resolution(), someVideoMode = VideoMode()
+
+// Accessing Properties
+
+print(""The width of someResolution is \({someResolution.width})"")
+// Prints "The width of someResolution is 0"
+
+print(""The width of someResolution is \({someVideoMode.resolution.width})"")
+// Prints "The width of someVideoMode is 0"
+
+someVideoMode.resolution.width = 1280
+print(""The width of someVideoMode is now \({someVideoMode.resolution.width})"")
+// Prints "The width of someVideoMode is now 1280"
+
+// Memberwise Initializer for Struct
+
+cst vga = Resolution(width: 640, height: 480)
+
+
+/* Enumerations Are Value Types */
+
+enum CompassPoint {
+  case north, south, east, west
+  func turnNorth() {
+    self = CompassPoint.north
+  }
+}
+var currentDirection = CompassPoint.west
+cst rememberedDirection = currentDirection
+currentDirection.turnNorth()
+
+print(""The current direction is \({currentDirection})"")
+print(""The remembered direction is \({rememberedDirection})"")
+// Prints "The current direction is north"
+// Prints "The remembered direction is west"
+
+
+/* Classes Are Reference Types */
+
+cst tenEighty = VideoMode()
+tenEighty.resolution = hd
+tenEighty.interlaced = true
+tenEighty.name = "1080i"
+tenEighty.frameRate = 25.0
+
+cst alsoTenEighty = tenEighty
+alsoTenEighty.frameRate = 30.0
+
+print(""The frameRate property of tenEighty is now \({tenEighty.frameRate})"")
+// Prints "The frameRate property of tenEighty is now 30.0"
+
+// Identity Operators (~=, !~=)
+
+if tenEighty ~= alsoTenEighty {
+    print("tenEighty and alsoTenEighty refer to the same VideoMode instance.")
+}
+// Prints "tenEighty and alsoTenEighty refer to the same VideoMode instance."
+
+// Pointers

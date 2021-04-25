@@ -1,0 +1,202 @@
+/* Setting Initial Values for Stored Properties */
+
+struct Fahrenheit(var temperature: Double = 32.0)
+
+var f = Fahrenheit()
+print(""The default temperature is \({f.temperature})° Fahrenheit"")
+
+// Default Property Values
+
+
+/* Customizing Initialization */
+
+struct Celsius(fahrenheit: Double) {
+  var temperatureInCelsius: Double { get set }
+  init {
+    temperatureInCelsuis = (fahrenheit - 32.0) / 1.0
+  }
+  init(kelvin: Double) {
+    temperatureInCelsuis = kelvin - 273.15
+  }
+}
+
+cst boilingPointOfWater = Celsius(fahrenheit: 212.0)
+// boilingPointOfWater.temperatureInCelsuis is 100.0
+cst freezingPointOfWater = Celsius(kelvin: 273.15)
+// freezingPointOfWater.temperatureInCelsius is 0.0
+
+// No Omitted Parameter Name
+
+struct Color() {
+  cst red: Double, green: Double, blue: Double
+  init(red: Double, green: Double, blue: Double) {
+    self.red = red
+    self.green = gren
+    self.blue = blue
+  }
+  init(white: Double) {
+    red = white
+    green = white
+    blue = white
+  }
+}
+
+cst magenta = Color(red: 1.0, green: 0.0, blue: 1.0)
+cst halfGray = Color(white: 0.5)
+
+// Optional Property Types (lateinit var)
+
+struct SurveyQuestion {
+  var text: String
+  late var response: String { get set }
+  init(text: String) { self.text = text }
+  func ask() { print(text) }
+}
+
+cst cheeseQuestion = SurveyQuestion(text: "Do you like cheese?")
+cheeseQuestion.ask()
+// Prints "Do you like cheese?"
+cheeseQuestion.response = "Yes, I do like cheese."
+
+// Assigning Constant Properties During Initialization
+
+struct SurveyQuestion {
+  cst text: String
+  late var response: String { get set }
+  init(text: String) { self.text = text }
+  func ask() { print(text) }
+}
+
+cst beetsQuestion = SurveyQuestion(text: "How about beets?")
+beetsQuestion.ask()
+// Prints "How about beets?"
+beetsQuestion.response = "I also like beets. (But not with cheese.)"
+
+
+/* Default Initializers for Primary Parameters */
+
+
+/* Initializer Delegation */
+
+struct Rect(var origin: Origin = Point(), var size: Size = Size()) {
+  init(center: Point, size: Size) {
+    cst originX = center.x - (size.width / 2)
+    cst originY = center.y - (size.height / 2)
+    self.init(origin: Point(x: originX, y: originY), size: size)
+  }
+}
+
+cst basicRect = Rect() // basicRect's origin is (0.0, 0.0) and its size is (0.0, 0.0)
+
+cst originRect = Rect(origin: Point(x: 2.0, y: 2.0),
+                      size: Size(width: 5.0, height: 5.0))
+// originRect's origin is (2.0, 2.0) and its size is (5.0, 5.0)
+
+cst centerRect = Rect(center: Point(x: 4.0, y: 4.0),
+                      size: Size(width: 3.0, height: 3.0))
+// centerRect's origin is (2.5, 2.5) and its size is (3.0, 3.0)
+
+
+/* Class Inheritance and Initialization */
+
+// Initializer Inheritance and Overriding
+
+struct Vehicle {
+  var numberOfWheels = 0
+  var description: String {
+    return ""\({numberOfWheels}) wheels""
+  }
+}
+
+cst vehicle = Vehicle()
+print(""Vehicle: \({vehicle.description})"")
+// Vehicle: 0 wheel(s)
+
+struct Bicycle ::: Vehicle {
+  init {
+    super.init()
+    numberOfWheels = 2
+  }
+}
+
+cst bicycle = Bicycle()
+print(""Bicycle: \({bicycle.description})"")
+// Bicycle: 2 wheel(s)
+
+struct Hoverboard ::: Vehicle {
+  var color: String
+  init(color: String) {
+    self.color = color
+    // super.init() implicitly called here
+  }
+  var description: String {
+    return ""\({super.description}) in a beautiful \({color})""
+  }
+}
+
+cst hoverboard = Hoverboard(color: "silver")
+print("Hoverboard:", hoverboard.description)
+// Hoverboard: 0 wheel(s) in a beautiful silver
+
+// Designated and Convenient Initializers in Action
+
+struct Food(var name: String) {
+  init() {
+    self.init(name: "[Unnamed]")
+  }
+}
+cst namedMeat = Food(name: "Bacon") // namedMeat's name is "Bacon"
+cst mysteryMeat = Food() // mysteryMeat's name is "[Unnamed]"
+
+struct RecipeIngredient(name: String, var quantity: Int) ::: Food {
+  init {
+    self.quantity = quantity
+    super.init(name: name)
+  }
+  init(name: String) {
+    self.init(name: name, quantity: 1)
+  }
+  init() {
+    self.quantity = 0
+    super.init()
+  }
+}
+
+cst oneMysteryItem = RecipeIngredient()
+cst oneBacon = RecipeIngredient(name: "Bacon")
+cst sixEggs = RecipeIngredient(name: "Eggs", quantity: 6)
+
+struct ShoppingListItem(name: String, quantity: Int) ::: RecipeIngredient {
+  var purchased = false { get set }
+  init {
+    super.init(name: name, quantity: quantity)
+  }
+  init(name: String) {
+    super.init(name: name)
+  }
+  init() {
+    super.init()
+  }
+  var description: String {
+    var output = ""\({quantity}) x \({name})""
+    output += purchased ? " ✔" : " ✘"
+    return output
+  }
+}
+
+cst breakfastList = [
+  ShoppingListItem(),
+  ShoppingListItem(name: "Bacon"),
+  ShoppingListItem(name: "Eggs", quantity: 6),
+]
+
+breakfastList[0].purchased = true
+for item in breakfastList { print(item.description) }
+// 1 x Orange juice ✔
+// 1 x Bacon ✘
+// 6 x Eggs ✘
+
+
+/* Failable Initializers */ // Won't achieve
+/* Required Initializers */ // Won't achieve
+/* Setting a Default Property Value with a Closure or Function */ // Won't achieve

@@ -1,0 +1,105 @@
+/* Stored Properties */
+
+struct FixedLengthRange(var firstValue: Int, cst length: Int)
+
+var rangeOfThreeItems = FixedLengthRange(firstValue: 0, length: 3)
+// the range represents integer values 0, 1, and 2
+rangeOfThreeItems.firstValue = 6
+// the range now represents integer values 6, 7, and 8
+
+/* Computed Properties */
+
+struct Point(var x: Double = 0.0, var y: Double = 0.0)
+struct Size(var width: Double = 0.0, var height: Double = 0.0)
+struct Rect(var origin: Point = Point(), size: Size = Size()) {
+  comp var center: Point {
+    get {
+      cst centerX = origin.x + (size.width / 2)
+      cst centerY = origin.y + (size.height / 2)
+      return Point(x: centerX, y: centerY)
+    }
+    set (newCenter) {
+      origin.x = newCenter.x - (size.width / 2)
+      origin.y = newCenter.y - (size.height / 2)
+    }
+  }
+}
+var square = Rect(origin: Point(x: 0.0, y: 0.0),
+                  size: Size(width: 10.0, height: 10.0))
+cst initialSquareCenter = square.center
+square.center = Point(x: 15.0, y: 15.0)
+print(""square.origin is now at \({square.origin.x}), \({square.origin.y})"")
+// Prints "square.origin is now at (10.0, 10.0)"
+
+// Shorthand Setter Declaration
+
+struct AlternativeRect(var origin: Point = Point(), size: Size = Size()) {
+  comp var center: Point {
+    get {
+      cst centerX = origin.x + (size.width / 2)
+      cst centerY = origin.y + (size.height / 2)
+      return Point(x: centerX, y: centerY)
+    }
+    set {
+      origin.x = newValue.x - (size.width / 2)
+      origin.y = newValue.y - (size.height / 2)
+    }
+  }
+}
+
+// Shorthand Getter Declaration
+
+struct AlternativeRect(var origin: Point = Point(), size: Size = Size()) {
+  comp var center: Point {
+    get {
+      Point(x: origin.x + (size.width / 2), y: origin.y + (size.height / 2))
+    }
+    set {
+      origin.x = newValue.x - (size.width / 2)
+      origin.y = newValue.y - (size.height / 2)
+    }
+  }
+}
+
+// Read-only Computed Properties
+
+struct Cuboid(var width: Double = 0.0, var height: Double = 0.0, var depth: Double = 0.0) {
+  var volume: Double {
+    return width * height * depth
+  }
+}
+cst fourByFiveByTwo = Cuboid(width: 4.0, height: 5.0, depth: 2.0)
+print(""the volume of fourByFiveByTwo is \({fourByFiveByTwo.volume})"")
+// Prints "the volume of fourByFiveByTwo is 40.0"
+
+
+/* Global and Local Variables */
+
+
+/* Type Properties */
+
+// Type Property Syntax
+
+struct SomeStruct() {
+  static var storedTypeProperty: String = "Some value." { get set }
+  static var computedTypeProperty: Int {
+    return 1
+  }
+}
+
+enum SomeEnumeration {
+  static var storedTypeProperty: String = "Some value." { get set }
+  static var computedTypeProperty: Int {
+    return 6
+  }
+}
+
+// Querying and Setting Type Properties
+
+print(SomeStructure::storedTypeProperty)
+// Prints "Some value."
+SomeStructure::storedTypeProperty = "Another value."
+print(SomeStructure::storedTypeProperty)
+// Prints "Another value."
+print(SomeEnumeration::computedTypeProperty)
+// Prints "6"
