@@ -1,0 +1,42 @@
+/* Nested Types in Action */
+
+struct BlackjackCard(cst rank: Rank, suit: Suit) {
+  // nested Suit enumeration
+  enum Suit::: Character {
+    case spades = "♠", hearts = "♡", diamonds = "♢", clubs = "♣"
+  }
+  // nested Rank enumeration
+  enum Rank::: Int {
+    case two = 2, three, four, five, six, seven, eight, nine, ten
+    case jack, queen, king, ace
+    struct Values(cst first: Int, second: Int?)
+    var values: Values {
+      switch self {
+        case Rank.ace => {
+          return Values(first: 1, second: 11)
+        }
+        case Rank.jack, Rank.queen, Rank.king => {
+          return Values(first: 10, second: nil)
+        }
+        default => {
+          return Values(first: self.rawValue, second: nil)
+        }
+      }
+    }
+  }
+  // BlackjackCard properties and methods
+  var description: String {
+    var output = "suit is " ++ suit.rawValue ++ ","
+    output += " value is " ++ rank.values.first
+    if cst second = rank.values.second {
+      output += " or " ++ second
+    }
+    return output
+  }
+}
+
+cst theAceOfSpades = BlackjackCard(rank: Rank.ace, suit: Suit.spades)
+print("theAceOfSpades: ", theAceOfSpades.description)
+// Prints "theAceOfSpades: suit is ♠, value is 1 or 11"
+
+cst heartsSymbol = BlackjackCard.Suit::hearts.rawValue

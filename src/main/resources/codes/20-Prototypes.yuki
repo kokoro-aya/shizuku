@@ -1,0 +1,234 @@
+/* Prototype Syntax */
+
+/*
+prototype SomePrototype {
+  // protocol definition goes here
+}
+*/
+
+// struct cannot "inherit from" a prototype, which must be implemented by an extension binded to a struct
+
+
+/* Property Requirements */
+
+prototype SomePrototype {
+  var mustBeSettable: Int { get set }
+  var doesNotNeedToBeSettable: Int { get }
+}
+
+prototype AnotherPrototype {
+  static comp var someTypeProperty: Int { get, set }
+}
+
+prototype FullyNamed {
+  var fullName: String { get set } // can be extended as stored or computed property
+}
+
+extension Person ::: FullyNamed {
+  var fullName: String = "John Appleseed"
+}
+// john.fullName is "John Appleseed"
+
+extension Starship ::: FullyNamed {
+  var name: String { get set }
+  var prefix: String? { get set }
+  var fullName: String {
+    return (prefix != nil ? prefix!! ++ " " : "") ++ name
+  }
+}
+cst ncc1701 = Starship()
+ncc1701.name = "Enterprise"
+ncc1701.prefix = "USS"
+// ncc1701.fullName is "USS Enterprise"
+
+
+/* Method Requirements */
+
+prototype SomePrototype {
+  static func someTypeMethod()
+}
+
+prototype RandomNumberGenerator {
+  func random(): Double
+}
+struct LinearCongruentialGenerator {
+  var lastRandom = 42.0
+  cst m = 139968.0
+  cst a = 3877.0
+  cst c = 29573.0
+}
+extension LinearCongruentialGenerator ::: RandomNumberGenerator {
+  func random(): Double {
+    lastRandom = ((lastRandom * a + c).truncatingRemainder(dividingBy: m))
+    return lastRandom / m
+  }
+}
+
+cst generator = LinearCongruentialGenerator()
+
+print(""Here's a random number: \({generator.random()})"")
+// Prints "Here's a random number: 0.3746499199817101"
+print(""And another one: \({generator.random()})"")
+// Prints "And another one: 0.729023776863283"
+
+/* Mutating Method Requirements */ // won't achieve
+// Extension on enum: won't achieve
+
+/* Initializer Requirements */ // won't achieve
+
+/* Prototypes as Types */
+
+struct Dice(cst sides: Int, cst generator: RandomNumberGenerator) {
+  func roll(): Int {
+    return Int(generator.random() * Double(sides)) + 1
+  }
+}
+
+var d6 = Dice(sides: 6, generator: LinearCongruentialGenerator())
+for _ in 1 ... 5 {
+  print("Random dice roll is", d6.roll())
+}
+
+// !!! Delegation pattern
+
+/* Adding Prototype Conformance with an Extension */
+
+prototype TextRepresentable {
+  var textualDescription: String { get }
+}
+extension Dice ::: TextRepresentable {
+  var textualDescription: String {
+    return ""A \({sides})-sided dice""
+  }
+}
+
+cst d12 = Dice(sides: 12, generator: LinearCongruentialGenerator())
+print(d12.textualDescription) // Prints "A 12-sided dice"
+
+extension SnakesAndLadders ::: TextRepresentable {
+  var textualDescription: String {
+    return ""A game of Snakes and Ladders with \({finalSquare}) squares""
+  }
+}
+print(game.textualDescription) // Prints "A game of Snakes and Ladders with 25 squares"
+
+// Conditionally Conforming to a Prototype // won't achieve
+
+/* Declaring Prototype Adoption with an Extension */
+
+struct Hamster {
+  var name: String
+  var textualDescription: String {
+    return "A hamster named " ++ name
+  }
+}
+extension Hamster ::: TextRepresentable
+
+cst simonTheHamster = Hamster(name: "Simon")
+cst somethingTextRepresentable: TextRepresentable = simonTheHamster
+print(somethingTextRepresentable.textualDescription)
+
+/* Adopting a Prototype Using a Synthesized Implementation */
+// Is provided synthesized implementation of Equatable if satisfy the following rule:
+// - Structures that have only stored properties that conform to the Equatable prototype
+// To reveive a synthesized implementation of `equals`, declare conformance to Equatable without implementing an `equals` operator yourself.
+
+struct Vector3d(var x = 0.0, var y = 0.0, var z = 0.0)
+extension Vector3d ::: Equatable
+
+cst twoThreeFour = Vector3d(x: 2.0, y: 3.0, z: 4.0)
+cst anotherTwoThreeFour = Vector3d(x: 2.0, y: 3.0, z: 4.0)
+if twoThreeFour == anotherTwoThreeFour {
+  print("These two vectors are also equivalent.")
+} // Prints "These two vectors are also equivalent."
+
+// Is provided synthesized implementation of Hashable if satisfy the following rule:
+// - Structures that have only stored properties that conform to the Hashable prototype
+// To reveive a synthesized implementation of `hash`, declare conformance to Equatable without implementing an `hash` operator yourself.
+
+// Enumeration of Comparable -> won't achieve
+
+/* Collections of Prototype Types */
+
+cst things: [TextRepresentable] = [game, d12, simonTheHamster]
+for thing in things { print(thing.textualDescription) }
+// A game of Snakes and Ladders with 25 squares
+// A 12-sided dice
+// A hamster named Simon
+
+/* Prototype Inheritance */ // won't achieve
+/* Class Only Prototypes */ // won't achieve
+
+/* Prototype Composition */
+
+prototype Named { var name: String { get } }
+prototype Aged { var age: Int { get } }
+struct Person(var name: String, var age: Int)
+extension Person ::: Named, Aged
+
+func wishHappyBirthday(to: Named & Aged) {
+  print("Happy birthday,", to.name, "You're", to.age, "!")
+}
+cst birthdayPerson = Person(name: "Malcolm", age: 21)
+wishHappyBirthday(to: birthdayPerson)
+// Prints "Happy birthday, Malcolm, you're 21!"
+
+struct Location(var latitude: Double, var longitude: Double)
+struct City ::: Location {
+  var name: String { get set }
+  init (name: String, latitude: Double, longitude: Double) {
+    self.name = name
+    super.init(latitude: latitude, longitude: longitude)
+  }
+}
+extension City ::: Named
+func beginConcert(location: Location & Named) {
+  print("Hello,", location.name, "!")
+}
+cst seattle = City(name: "Seattle", latitude: 47.6, longitude: -122.3)
+beginConcert(location: seattle)
+
+
+/* Checking for Prototype Conformance */
+
+prototype HasArea { var area: Double { get } }
+struct Circle(var radius: Double) {
+  cst pi = 3.1415927
+  var area: Double { return pi * radius * radius }
+}
+struct Country(var area: Double)
+extension Circle ::: HasArea
+extension Country ::: HasArea
+
+struct Animal(var legs: Int)
+
+cst objects: [Any] = [
+  Circle(radius: 2.0),
+  Country(area: 243_610),
+  Animal(legs: 4)
+]
+
+for object in objects {
+  if cst objectWithArea = object as? HasArea {
+    print(""Area is \({objectWithArea.area})"")
+  } else {
+    print("Something that doesn't have an area")
+  }
+} // 注意objectWithArea可以被改变，而且这个改变会影响原值（引用）
+// Area is 12.5663708
+// Area is 243610.0
+// Something that doesn't have an area
+
+
+/* Optional Prototype Requirements */ // won't achieve
+
+/* Prototype Extensions */
+// Providing Default Implementations
+
+prototype PrettyTextRepresentable {
+  var prettyTextualDescription: String default {
+    return textualDescription
+  }
+}
+
+// Adding Constraints to Prototype Extensions // won't achieve

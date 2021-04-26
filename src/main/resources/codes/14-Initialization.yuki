@@ -48,7 +48,7 @@ cst halfGray = Color(white: 0.5)
 
 struct SurveyQuestion {
   var text: String
-  late var response: String { get set }
+  cst response: String { get } // late var
   init(text: String) { self.text = text }
   func ask() { print(text) }
 }
@@ -62,7 +62,7 @@ cheeseQuestion.response = "Yes, I do like cheese."
 
 struct SurveyQuestion {
   cst text: String
-  late var response: String { get set }
+  cst response: String { get } // late var
   init(text: String) { self.text = text }
   func ask() { print(text) }
 }

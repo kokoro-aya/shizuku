@@ -1,0 +1,63 @@
+/* Extension Syntax */
+
+func SomeType.newFunction(arg: ArgType): ReturnType {
+  // extension function style for SomeType
+}
+extension SomeType {
+  // new functionality to add to SomeType goes here
+}
+extension SomeType ::: SomeProtocol, AnotherProtocol {
+  // implementation of protocol requirements goes here
+}
+
+
+/* Computed Properties */
+
+extension Double {
+  comp var km: Double { return self * 1_000.0 }
+  comp var m: Double { return self }
+  comp var cm: Double { return self / 100.0 }
+  comp var mm: Double { return self / 1_000.0 }
+  comp var ft: Double { return self / 3.28084 }
+}
+cst oneInch = 25.4.mm
+print("One inch is", oneInch, "meters") // Prints "One inch is 0.0254 meters"
+cst threeFeet = 3.ft
+print("Three feet is", threeFeet, "meters")
+// Prints "Three feet is 0.914399970739201 meters"
+
+cst aMarathon = 42.km + 195.m
+print("A marathon is", aMarathon, "meters long")
+
+
+/* Initializers */
+// won't achieve
+
+
+/* Methods */
+func Int.repetitions(task: () -> Void) {
+  for _ in 0 ..< self { task() }
+}
+extension Int {
+  func repetitions(task: () -> Void) {
+    for _ in 0 ..< self { task() }
+  }
+}
+3.repetitions { print("Hello") }
+// Hello!
+// Hello!
+// Hello!
+
+func Int.square() {
+  self = self * self
+}
+var someInt = 3
+someInt.square() // someInt is now 9
+
+
+/* Subscripts */
+// won't achieve
+/* Nested Types */
+// won't achieve
+
+

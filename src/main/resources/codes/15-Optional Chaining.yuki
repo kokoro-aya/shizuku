@@ -1,0 +1,177 @@
+/* Optional Chaining as an Alternative to Forced Unwrapping */
+
+struct Person {
+  var residence: Residence? { get set }
+}
+
+struct Residence {
+  var numberOfRooms = 1 { get set }
+}
+
+cst john = Person()
+
+cst roomCount = john.residence!!.numberOfRooms
+// this triggers a runtime error
+
+if cst roomCount = john.residence?.numberOfRooms {
+  print("John's residence has", roomCount, "room(s).")
+} else {
+  print("Unable to retrieve the number of rooms.")
+} // Prints "Unable to retrieve the number of rooms."
+// !!! 是否允许对非Optional使用?.运算符？
+
+john.residence = Residence()
+// Prints "John's residence has 1 room(s)."
+
+
+/* Defining Model Classes for Optional Chaining */
+
+struct Person {
+  var residence: Residence? { get set }
+}
+
+struct Residence {
+  var rooms: [Room] = []
+  var numberOfRooms: Int { return rooms.size }
+  subscript(i: Int): Room {
+    get { return rooms[i] }
+    set { rooms[i] = newValue }
+  }
+  func printNumberOfRooms() {
+    print("The number of rooms is", numberOfRooms)
+  }
+  var address: Address? { get set }
+}
+
+struct Room(cst name: String)
+
+struct Address {
+  var buildingName: String? { get set }
+  var buildingNumber: String? { get set }
+  var street: String? { get set }
+  func buildingIdentifier(): String? {
+    if cst buildingNumber = buildingNumber, cst street = street {
+      return ""\({buildingNumber}) \({street})""
+    } else if buildingName != nil {
+      return buildingName
+    } else {
+      return nil
+    }
+  }
+}
+
+
+/* Accessing Properties Through Optional Chaining */
+
+cst john = Person()
+if cst roomCount = john.residence?.numberOfRooms {
+    print("John's residence has \(roomCount) room(s).")
+} else {
+    print("Unable to retrieve the number of rooms.")
+} // Prints "Unable to retrieve the number of rooms."
+
+cst someAddress = Address()
+someAddress.buildingNumber = "29"
+someAddress.street = "Acacia Road"
+john.residence?.address = someAddress // will fail as john.residence is nil
+
+func createAddress(): Address {
+  print("Function was called.")
+  cst someAddress = Address()
+  someAddress.buildingNumber = "29"
+  someAddress.street = "Acacia Road"
+
+  return someAddress
+}
+john.residence?.address = createAddress() // isn't called, nothing is printed
+
+
+/* Calling Methods Through Optional Chaining */
+
+func printNumberOfRooms() {
+  print("The number of rooms is", numberOfRooms)
+} // return type is Void
+
+if john.residence?.printNumberOfRooms() != nil { // return type become Void?
+  print("It was possible to print the number of rooms.")
+} else {
+  print("It was not possible to print the number of rooms.")
+} // Prints "It was not possible to print the number of rooms."
+
+if (john.residence?.address = someAddress) != nil {
+    print("It was possible to set the address.")
+} else {
+    print("It was not possible to set the address.")
+} // Prints "It was not possible to set the address."
+
+
+/* Accessing Subscripts Through Optional Chaining */
+
+if cst firstRoomName = john.residence?[0].name {
+    print("The first room name is \(firstRoomName).")
+} else {
+    print("Unable to retrieve the first room name.")
+} // Prints "Unable to retrieve the first room name."
+
+john.residence?[0] = Room(name: "Bathroom")
+
+cst johnsHouse = Residence()
+johnsHouse.rooms.append(Room(name: "Living Room"))
+johnsHouse.rooms.append(Room(name: "Kitchen"))
+john.residence = johnsHouse
+
+if cst firstRoomName = john.residence?[0].name {
+    print("The first room name is", firstRoomName, ".")
+} else {
+    print("Unable to retrieve the first room name.")
+} // Prints "The first room name is Living Room."
+
+// Accessing Subscripts of Optional Type
+
+var testScores = ["Dave": [86, 82, 84], "Bev": [79, 94, 81]]
+testScores["Dave"]?[0] = 91
+testScores["Bev"]?[0] += 1
+testScores["Brian"]?[0] = 72
+// the "Dave" array is now [91, 82, 84] and the "Bev" array is now [80, 94, 81]
+// The first two calls succeed, because the testScores dictionary contains keys for "Dave" and "Bev".
+// The third call fails, because the testScores dictionary doesn’t contain a key for "Brian".
+
+
+/* Linking Multiple Levels of Chaining */
+/*
+If the type you are trying to retrieve isn’t optional, it will become optional because of the optional chaining.
+If the type you are trying to retrieve is already optional, it will not become more optional because of the chaining.
+ */
+
+if cst johnsStreet = john.residence?.address?.street {
+  print("John's street name is", johnsStreet, ".")
+} else {
+  print("Unable to retrieve the address.")
+} // Prints "Unable to retrieve the address."
+
+cst johnsAddress = Address()
+johnsAddress.buildingName = "The Larches"
+johnsAddress.street = "Laurel Street"
+john.residence?.address = johnsAddress
+
+if cst johnsStreet = john.residence?.address?.street {
+  print("John's street name is", johnsStreet, ".")
+} else {
+  print("Unable to retrieve the address.")
+} // Prints "John's street name is Laurel Street."
+
+
+/* Chaining on Methods with Optional Return Values */
+
+if cst buildingIdentifier = john.residence?.address?.buildingIdentifier() {
+  print("John's building identifier is", buildingIdentifier, ".")
+} // Prints "John's building identifier is The Larches."
+
+if cst beginsWithThe =
+    john.residence?.address?.buildingIdentifier()?.hasPrefix("The") {
+    if beginsWithThe {
+        print("John's building identifier begins with The.")
+    } else {
+        print("John's building identifier doesn't begin with The.")
+    }
+} // Prints "John's building identifier begins with The."

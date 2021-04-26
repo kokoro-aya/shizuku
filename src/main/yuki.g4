@@ -107,15 +107,14 @@ MIXINS: ':::';
 // Literals
 
 literal: numeric_literal | boolean_literal | char_sequence_literal | nil_literal;
-numeric_literal: (ADD | SUB)? (integer_literal | double_literal);
+numeric_literal: (ADD | SUB)? (double_literal | integer_literal);
 boolean_literal: 'true' | 'false';
 char_sequence_literal: string_literal | CHARACTER_LITERAL | UNICODE_LITERAL;
 nil_literal: 'nil';
 
 integer_literal: DECIMAL_LITERAL | HEXADECIMAL_LITERAL | OCTAL_LITERAL | BINARY_LITERAL;
-double_literal: DECIMAL_LITERAL '.' DECIMAL_LITERAL?
-              | DECIMAL_LITERAL? '.' DECIMAL_LITERAL
-              ;
+double_literal: DECIMAL_LITERAL '.' DECIMAL_LITERAL
+              ; // illegal: 0. or .5
 string_literal: MULTILINE_STRING_LITERAL | STATIC_STRING_LITERAL | interpolated_string_literal;
 interpolated_string_literal: STRING_HEAD expression (STRING_INTERM expression)* STRING_END;
 
@@ -133,6 +132,7 @@ type: function_type
     | '(' type ')'
     | type '?'  // optional_type
     | type '!!' // implicitly_unwrapped_optional_type
+    | prototype_composition_type
     ;
 
 type_annotation: ':' type;
@@ -158,6 +158,8 @@ map_type: '[' type ':' type ']';
 any_type: 'Any';
 self_type: 'Self';
 
+prototype_composition_type: T_IDENTIFIER ('&' T_IDENTIFIER)*;
+
 type_inheritance_clause: MIXINS type_identifier (',' type_identifier)*;
 
 
@@ -165,24 +167,18 @@ type_inheritance_clause: MIXINS type_identifier (',' type_identifier)*;
 // Expressions
 
 expression:
-          // Postfix expressions aka explicit member expressions
-            explicit_member_expression
-          | static_member_expression
-          | enum_member_expression
-          | type_subscript_expression
-          | expression '!!'
           // Primary Expressions
-          | variable_expression
-          | literal_expression
-          | self_expression
-          | '$' DECIMAL_LITERAL // in closure
-          | superclass_initialization_expression
+            superclass_initialization_expression
           | initializer_delegate_expression
           | closure_expression
           | tuple_expression
           | function_call_expression
           | struct_construct_expression
           | parenthesized_expression
+          | variable_expression
+          | literal_expression
+          | self_expression
+          | '$' DECIMAL_LITERAL // in closure
           | wildcard_expression
           | spread_expression
           // Binary Expressions
@@ -202,6 +198,12 @@ expression:
           | expression conditional_operator expression
           | pattern assignment_operator expression
           | pattern op=(ADDEQ | SUBEQ | MULEQ | DIVEQ | MODEQ) expression
+          // Postfix expressions aka explicit member expressions
+          | explicit_member_expression
+          | static_member_expression
+          | enum_member_expression
+          | type_subscript_expression
+          | expression '!!'
           ;
 
 assignment_operator: '=';
@@ -249,13 +251,13 @@ function_call_expression: function_name generic_argument_clause? function_call_a
                         | function_name generic_argument_clause? overhang_arguments? code_block
                         | function_name generic_argument_clause? overhang_arguments? closure_expression
                         ;
-function_call_argument_clause: '(' ')' | '(' function_call_by_name ')' | '(' function_call_argument_list ')';
-function_call_by_name: static_member_expression | IDENTIFIER ':' static_member_expression;
+function_call_argument_clause: '(' ')' /*| '(' function_call_by_name ')'*/ | '(' function_call_argument_list ')';
+//function_call_by_name: static_member_expression | IDENTIFIER ':' static_member_expression;
 function_call_argument_list: function_call_argument (',' function_call_argument)*;
 function_call_argument: REF? expression | IDENTIFIER ':' REF? expression;
 
 struct_construct_expression: struct_name generic_argument_clause? struct_construct_argument_clause;
-struct_construct_argument_clause: '(' struct_construct_argument_list? ')';
+struct_construct_argument_clause: '(' function_call_argument_list? ')';
 struct_construct_argument_list: struct_construct_argument (',' struct_construct_argument)*;
 struct_construct_argument: IDENTIFIER ':' REF? expression;
 
@@ -263,28 +265,28 @@ argument_names: argument_name+;
 argument_name: IDENTIFIER ':';
 overhang_arguments: '(' argument_names ')';
 
-explicit_member_callee: static_member_expression
-                      | enum_member_expression
+explicit_member_callee: literal_expression
                       | variable_expression
-                      | literal_expression
                       | self_expression
                       | superclass_expression
+                      | static_member_expression
+                      | enum_member_expression
                       | tuple_expression;
-explicit_member_expression: explicit_member_callee ('?')? '.' function_call_expression
-                          | explicit_member_callee ('?')? '.' DECIMAL_LITERAL
-                          | explicit_member_callee ('?')? '.' IDENTIFIER
-                          | explicit_member_callee ('?')? '.' IDENTIFIER '(' argument_names ')'
-                          | explicit_member_callee ('?')? '.' self_expression
-                          | explicit_member_callee ('?')? '.' superclass_expression
-                          | explicit_member_callee ('?')? '[' subscript ']'
+explicit_member_expression: explicit_member_callee ('?' | '!!')? '.' function_call_expression
+                        /*| explicit_member_callee ('?' | '!!')? '.' DECIMAL_LITERAL */
+                          | explicit_member_callee ('?' | '!!')? '.' IDENTIFIER
+                          | explicit_member_callee ('?' | '!!')? '.' IDENTIFIER '(' argument_names ')'
+                          | explicit_member_callee ('?' | '!!')? '.' self_expression
+                          | explicit_member_callee ('?' | '!!')? '.' superclass_expression
+                          | explicit_member_callee ('?' | '!!')? '[' subscript ']'
                           | explicit_member_callee '?:' expression
-                          | explicit_member_expression ('?')? '.' function_call_expression
-                          | explicit_member_expression ('?')? '.' DECIMAL_LITERAL
-                          | explicit_member_expression ('?')? '.' IDENTIFIER
-                          | explicit_member_expression ('?')? '.' IDENTIFIER '(' argument_names ')'
-                          | explicit_member_expression ('?')? '.' self_expression
-                          | explicit_member_expression ('?')? '.' superclass_expression
-                          | explicit_member_expression ('?')? '[' subscript ']'
+                          | explicit_member_expression ('?' | '!!')? '.' function_call_expression
+                        /*| explicit_member_expression ('?' | '!!')? '.' DECIMAL_LITERAL */
+                          | explicit_member_expression ('?' | '!!')? '.' IDENTIFIER
+                          | explicit_member_expression ('?' | '!!')? '.' IDENTIFIER '(' argument_names ')'
+                          | explicit_member_expression ('?' | '!!')? '.' self_expression
+                          | explicit_member_expression ('?' | '!!')? '.' superclass_expression
+                          | explicit_member_expression ('?' | '!!')? '[' subscript ']'
                           | explicit_member_expression '?:' expression
                           ;
 static_member_expression: type? '::' IDENTIFIER
@@ -293,14 +295,14 @@ static_member_expression: type? '::' IDENTIFIER
                         ;
 enum_member_expression: enum_name '.' enum_case_name;
 
-type_subscript_expression: type '[' subscript ']';
+type_subscript_expression: type_name '[' subscript ']';
 
 // Statements
 
 statements: statement+;
 
-statement: expression ';'?
-         | declaration ';'?
+statement: declaration ';'?
+         | expression ';'?
          | loop_statement ';'?
          | branch_statement ';'?
          | control_transfer_statement ';'?
@@ -361,7 +363,7 @@ do_statement: 'do' code_block;
 
 declaration: constant_declaration
            | variable_declaration
-           | lateinit_var_declaration
+        /* | lateinit_var_declaration */
            | computed_var_declaration
            | typealias_declaration
            | function_declaration
@@ -396,13 +398,13 @@ lateinit_var_declaration: 'late var' pattern_initializer_list
 computed_var_declaration: 'comp var' variable_name type_annotation (getter_setter_block | code_block);
 
 getter_block: '{' getter_clause '}';
-getter_setter_block: '{' getter_clause setter_clause? '}'
-                   | '{' setter_clause getter_clause '}'
+getter_setter_block: '{' getter_clause ','? setter_clause? '}'
+                   | '{' setter_clause ','? getter_clause '}'
                    ;
-getter_clause: 'get' code_block;
+getter_clause: 'get' code_block?;
 setter_clause: 'set' setter_name? code_block;
-get_set_block: '{' 'get' 'set'? '}'
-             | '{' 'set' 'get' '}'
+get_set_block: '{' 'get' ','? 'set'? '}'
+             | '{' 'set' ','? 'get' '}'
              ;
 setter_name: '(' IDENTIFIER ')';
 
@@ -413,9 +415,9 @@ typealias_declaration: 'typealias' typealias_name generic_parameter_clause? type
 typealias_name: T_IDENTIFIER;
 typealias_assignment: '=' type;
 
-function_declaration: function_head (type MIXINS extension_type '.')? function_name generic_parameter_clause? function_signature function_body?;
+function_declaration: function_head (extension_func_type '.')? function_name generic_parameter_clause? function_signature function_body?;
 function_head: 'operator'? 'func';
-extension_type: type;
+extension_func_type: type;
 function_name: IDENTIFIER;
 
 function_signature: parameter_clause function_result?;
@@ -461,26 +463,44 @@ type_property_declaration: 'static' constant_declaration // static members
                          | 'static' function_declaration
                          | 'static' subscript_declaration
                          ;
-struct_enum_body_member: declaration | type_property_declaration;
+struct_enum_body_member: declaration | type_property_declaration | struct_dangling_constant_declaration;
+struct_dangling_constant_declaration: 'cst' constant_name type_annotation (getter_block | code_block);
 
 prototype_declaration: 'prototype' prototype_name prototype_body;
 prototype_name: T_IDENTIFIER;
 prototype_body: '{' prototype_member_declaration+ '}';
 prototype_member_declaration: prototype_property_declaration
                             | prototype_computed_property_declaration
-                            | prototype_method_declaration;
-prototype_property_declaration: 'var' variable_name type_annotation prototype_property_implementation;
-prototype_computed_property_declaration: 'comp var' variable_name type_annotation prototype_computed_property_implementation;
-prototype_method_declaration: function_head function_name generic_parameter_clause? function_signature prototype_method_implementation?;
-prototype_property_implementation: 'internal' | 'default' initializer (getter_setter_block | get_set_block)?;
+                            | prototype_method_declaration
+                            | prototype_subscript_declaration
+                            | prototype_associated_type_declaration
+                            ;
+prototype_property_declaration: 'static'? 'var' variable_name type_annotation prototype_property_implementation;
+prototype_computed_property_declaration: 'static'? 'comp var' variable_name type_annotation prototype_computed_property_implementation;
+prototype_method_declaration: 'static'? function_head function_name generic_parameter_clause? function_signature prototype_method_implementation?;
+prototype_property_implementation: 'internal'
+                                 | 'default' initializer (getter_setter_block | get_set_block)? // default stored property
+                                 | 'default' (getter_setter_block | get_set_block | code_block) // default computed property
+                                 | get_set_block?; // can be both
 prototype_computed_property_implementation: 'internal' | 'default' getter_setter_block | get_set_block;
 prototype_method_implementation: 'internal' | 'default' function_body;
 
-extension_declaration: 'extension' type type_inheritance_clause extension_body?;
+prototype_subscript_declaration: subscript_head subscript_result prototype_subscript_implementation;
+prototype_subscript_implementation: 'internal'
+                                  | 'default' (getter_setter_block | get_set_block | code_block)
+                                  | get_set_block;
+
+prototype_associated_type_declaration: 'associated' typealias_name type_inheritance_clause? typealias_assignment?;
+
+extension_declaration: 'extension' type type_inheritance_clause
+                     | 'extension' type type_inheritance_clause? extension_body;
 extension_body: '{' extension_member+ '}';
-extension_member: computed_var_declaration
-                | function_declaration
-                | variable_declaration;
+extension_member: 'static'? computed_var_declaration
+                | 'static'? variable_declaration
+                | 'static'? function_declaration
+                | 'static'? subscript_declaration
+                | typealias_declaration
+                ;
 
 subscript_declaration: subscript_head subscript_result (getter_setter_block | get_set_block | code_block);
 subscript_head: 'subscript' generic_parameter_clause? parameter_clause;
@@ -517,16 +537,16 @@ type_casting_pattern: is_pattern | as_pattern;
 is_pattern: 'is' type;
 as_pattern: 'as' type;
 
-member_pattern: identifier_pattern '.' IDENTIFIER
-              | member_pattern '.' IDENTIFIER
+member_pattern: identifier_pattern ('?' | '!!')? '.' IDENTIFIER
+              | member_pattern ('?' | '!!')? '.' IDENTIFIER
               | self_pattern '.' IDENTIFIER
               | super_pattern '.' IDENTIFIER
-              | subscript_pattern '.' IDENTIFIER
+              | subscript_pattern ('?' | '!!')? '.' IDENTIFIER
               ;
 static_member_pattern: type? '::' IDENTIFIER;
-subscript_pattern: identifier_pattern '[' subscript ']'
-                 | explicit_member_expression '[' subscript ']'
-                 | subscript_pattern '[' subscript ']';
+subscript_pattern: identifier_pattern ('?' | '!!')? '[' subscript ']'
+                 | explicit_member_expression ('?' | '!!')? '[' subscript ']'
+              /* | subscript_pattern ('?' | '!!')? '[' subscript ']' */;
 subscript: IDENTIFIER | literal | reverse_subscript | slice_subscript | expression
          | subscript_list
          ;

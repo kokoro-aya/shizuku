@@ -1,0 +1,185 @@
+/* The Problem That Generics Solve */
+
+func swapTwoInts(_ &a: Int, _ &b: Int) {
+  cst temp = a
+  a = b
+  b = temp
+}
+
+var someInt = 3
+var anotherInt = 107
+swapTwoInts(&someInt, &anotherInt)
+print(""someInt is now \({someInt}), and anotherInt is now \({anotherInt})"")
+// Prints "someInt is now 107, and anotherInt is now 3"
+
+func swapTwoStrings(_ &a: String, _ &b: String) {
+    let temporaryA = a
+    a = b
+    b = temporaryA
+}
+
+func swapTwoDoubles(_ &a: Double, _ &b: Double) {
+    let temporaryA = a
+    a = b
+    b = temporaryA
+}
+
+
+/* Generic Functions */
+
+func swapTwoValues<T>(_ &a: T, _ &b: T) {
+  cst temp = a
+  a = b
+  b = a
+}
+
+var someInt = 3
+var anotherInt = 107
+swapTwoValues(&someInt, &anotherInt)
+// someInt is now 107, and anotherInt is now 3
+
+var someString = "hello"
+var anotherString = "world"
+swapTwoValues(&someString, &anotherString)
+// someString is now "world", and anotherString is now "hello"
+
+
+/* Type Parameters */
+
+/* Naming Type Parameters */
+
+/* Generic Types */
+
+struct IntStack {
+  cst items: [Int] = []
+  func push(_ item: Int) { items.pushBack(item) }
+  func pop(): Int { return items.popBack() }
+}
+
+struct Stack<Element> {
+  cst items: [Element] = []
+  func push(_ item: Element) { items.pushBack(item) }
+  func pop(): Element { return items.popBack() }
+}
+
+var stackOfStrings = Stack<String>()
+stackOfStrings.push("uno")
+stackOfStrings.push("dos")
+stackOfStrings.push("tres")
+stackOfStrings.push("cuatro") // the stack now contains 4 strings
+
+cst fromTop = stackOfStrings.pop()
+// fromTheTop is equal to "cuatro", and the stack now contains 3 strings
+
+
+/* Extending a Generic Type */
+
+extension Stack {
+  var topItem: Element? {
+    return items.isEmpty ? nil : items[items.size - 1]
+  }
+}
+
+if cst topItem = stackOfStrings.topItem {
+  print(""The top item on the stack is \({topItem})."")
+} // Prints "The top item on the stack is tres."
+
+
+/* Type Constraints */
+
+// Type Constraint Syntax
+
+func someFunction<T: SomeClass, U: SomePrototype>(someT: T, someU: U) {
+  // function body goes here
+}
+func findIndex(valueToFind: String, array: [String]): Int? {
+  for (index, value) in array.enumerated() {
+    if value == valueToFind {
+      return index
+    }
+  }
+  return nil
+}
+
+cst strings = ["cat", "dog", "llama", "parakeet", "terrapin"]
+if cst foundIndex = findIndex(valueToFind: "llama", array: strings) {
+    print("The index of llama is \(foundIndex)")
+} // Prints "The index of llama is 2"
+
+
+func findIndex<T>(_ valueToFind: T, _ array:[T]): Int? {
+  for (index, value) in array.enumerated() {
+    if value == valueToFind {
+      return index
+    }
+  }
+  return nil
+} // won't compile as per the equality check 'if value == valueToFind' need to have == operator implemented
+
+func findIndex<T: Equatable>(_ valueToFind: T, _ array:[T]): Int? {
+  for (index, value) in array.enumerated() {
+    if value == valueToFind {
+      return index
+    }
+  }
+  return nil
+}
+
+cst doubleIndex = findIndex(valueToFind: 9.3, array: [3.14159, 0.1, 0.25])
+// doubleIndex is an optional Int with no value, because 9.3 isn't in the array
+cst stringIndex = findIndex(valueToFind: "Andrea", array: ["Mike", "Malcolm", "Andrea"])
+// stringIndex is an optional Int containing a value of 2
+
+
+/* Associated Types */
+
+// Associate Types in Action
+
+prototype Container {
+  associated Item
+  func append(_ item: Item)
+  var count: Int { get }
+  subscript(i: Int): Item { get }
+}
+
+extension IntStack ::: Container {
+  typealias Item = Int
+  func append(_ item: Int) {
+    self.push(item)
+  }
+  var count: Int {
+    return items.size
+  }
+  subscript(i: Int): Int {
+    return item[i]
+  }
+}
+
+extension Stack<Element> ::: Container {
+  // Element is inferred to be the type Item
+  func append(_ item: Element) {
+    self.push(item)
+  }
+  var count: Int {
+    return items.size
+  }
+  subscript(i: Int): Element {
+    return items[i]
+  }
+}
+
+// Extending an Existing Type to Specify an Associated Type
+
+extension Array ::: Container
+
+// Adding Constraints to an Associated Type // won't achieve
+
+// Using a Protocol in Its Associated Type’s Constraints // won't achieve
+
+/* Generic Where Clauses */ // won't achieve
+
+/* Extensions with a Generic Where Clause */ // won't achieve
+
+/* Contextual Where Clauses */ // won't achieve
+
+/* Associated Types with a Generic Where Clause */ // won't achieve
