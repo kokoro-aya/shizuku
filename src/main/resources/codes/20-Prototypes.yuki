@@ -125,15 +125,17 @@ struct Hamster {
 extension Hamster ::: TextRepresentable
 
 cst simonTheHamster = Hamster(name: "Simon")
-cst somethingTextRepresentable: TextRepresentable = simonTheHamster
+cst somethingTextRepresentable: TextRepresentable = simonTheHamster // !!! do we need to force wrap it or should we has the possibility to call directly?
+// !!! Yes we should
 print(somethingTextRepresentable.textualDescription)
+print(simonTheHamster.textualDescription)
 
 /* Adopting a Prototype Using a Synthesized Implementation */
 // Is provided synthesized implementation of Equatable if satisfy the following rule:
 // - Structures that have only stored properties that conform to the Equatable prototype
 // To reveive a synthesized implementation of `equals`, declare conformance to Equatable without implementing an `equals` operator yourself.
 
-struct Vector3d(var x = 0.0, var y = 0.0, var z = 0.0)
+struct Vector3d(var x: Double = 0.0, var y: Double = 0.0, var z: Double = 0.0)
 extension Vector3d ::: Equatable
 
 cst twoThreeFour = Vector3d(x: 2.0, y: 3.0, z: 4.0)

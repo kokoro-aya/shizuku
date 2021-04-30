@@ -13,10 +13,10 @@ print(""The default temperature is \({f.temperature})° Fahrenheit"")
 struct Celsius(fahrenheit: Double) {
   var temperatureInCelsius: Double { get set }
   init {
-    temperatureInCelsuis = (fahrenheit - 32.0) / 1.0
+    temperatureInCelsius = (fahrenheit - 32.0) / 1.0
   }
   init(kelvin: Double) {
-    temperatureInCelsuis = kelvin - 273.15
+    temperatureInCelsius = kelvin - 273.15
   }
 }
 
@@ -48,7 +48,7 @@ cst halfGray = Color(white: 0.5)
 
 struct SurveyQuestion {
   var text: String
-  cst response: String { get } // late var
+  cst response: String { get, set } // late var
   init(text: String) { self.text = text }
   func ask() { print(text) }
 }
@@ -62,7 +62,7 @@ cheeseQuestion.response = "Yes, I do like cheese."
 
 struct SurveyQuestion {
   cst text: String
-  cst response: String { get } // late var
+  var response: String { get, set } // late var
   init(text: String) { self.text = text }
   func ask() { print(text) }
 }
@@ -190,7 +190,7 @@ cst breakfastList = [
   ShoppingListItem(name: "Eggs", quantity: 6),
 ]
 
-breakfastList[0].purchased = true
+breakfastList[0].purchased = true // !!! should only allow methods of current type of lhs? (e.g. Foo ::: Bar, while lhs is element of [Bar])
 for item in breakfastList { print(item.description) }
 // 1 x Orange juice ✔
 // 1 x Bacon ✘

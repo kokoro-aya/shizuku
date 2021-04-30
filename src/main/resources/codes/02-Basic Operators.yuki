@@ -23,7 +23,7 @@ if x = y {
 "hello, " + "world" // equals "hello, world"
 "hello, " ++ "world"
 
-9 % 4 // equals 1
+9 % 4; // equals 1
 -9 % 4 // equals -1
 
 cst three = 3

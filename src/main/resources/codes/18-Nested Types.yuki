@@ -10,7 +10,7 @@ struct BlackjackCard(cst rank: Rank, suit: Suit) {
     case two = 2, three, four, five, six, seven, eight, nine, ten
     case jack, queen, king, ace
     struct Values(cst first: Int, second: Int?)
-    var values: Values {
+    comp var values: Values {
       switch self {
         case Rank.ace => {
           return Values(first: 1, second: 11)

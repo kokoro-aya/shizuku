@@ -23,7 +23,7 @@ reversedNames = names.sorted(by: { s1, s2 in return s1 > s2 } ) */
 
 // Implicit Returns from Single-Expression Closures
 
-reversedNames = names.sorted(by: { (s1: String, s2: String): Bool ->
+reversedNames = names.sorted(by: { (s1: String, s2: String): Bool -> // automatically infer to default parameters' name
   s1 > s2
 })
 
@@ -33,8 +33,8 @@ reversedNames = names.sorted(by:) { $0 > $1 }
 
 // Method Calls
 
-reversedNames = names.sorted(by: ::gt)
-
+reversedNames = names.sorted(by: String::gt) // Comparable::gt, translate to Comparable.self.gt(other: Comparable)
+// !!! Polymorphism, need to rethink it
 
 /* Trailing Closures */
 
@@ -59,7 +59,7 @@ cst strings = numbers.map { (number: Int): String ->
     var number = number
     var output = ""
     repeat {
-        output = digitNames[number % 10]! + output
+        output = digitNames[number % 10]!! + output
         number /= 10
     } while number > 0
     return output

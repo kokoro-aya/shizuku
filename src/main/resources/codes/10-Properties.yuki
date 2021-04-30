@@ -82,14 +82,14 @@ print(""the volume of fourByFiveByTwo is \({fourByFiveByTwo.volume})"")
 
 struct SomeStruct() {
   static var storedTypeProperty: String = "Some value." { get set }
-  static var computedTypeProperty: Int {
+  static comp var computedTypeProperty: Int {
     return 1
   }
 }
 
 enum SomeEnumeration {
   static var storedTypeProperty: String = "Some value." { get set }
-  static var computedTypeProperty: Int {
+  static comp var computedTypeProperty: Int {
     return 6
   }
 }

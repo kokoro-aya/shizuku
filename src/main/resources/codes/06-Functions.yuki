@@ -5,7 +5,7 @@ func greet(person: String): String {
   return greeting
 }
 
-print(greet(person: "Anna")) // Prints "Hello, Anna!"
+print(greet(person: "Anna")) // Prints "Hello, Anna!" // !!! attention to stack overflow
 print(greet(person: "Brian")) // Prints "Hello, Brian!"
 
 func greetAgain(person: String): String {

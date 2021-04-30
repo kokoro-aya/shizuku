@@ -271,8 +271,8 @@ for airportName in airports.values {
 // Airport name: London Heathrow
 // Airport name: Toronto Pearson
 
-let airportCodes: [String] = airports.keys
+cst airportCodes: [String] = airports.keys
 // airportCodes is ["LHR", "YYZ"]
 
-let airportNames: [String] = airports.values
+cst airportNames: [String] = airports.values
 // airportNames is ["London Heathrow", "Toronto Pearson"]

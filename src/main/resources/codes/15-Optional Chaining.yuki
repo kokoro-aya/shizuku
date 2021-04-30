@@ -32,7 +32,7 @@ struct Person {
 
 struct Residence {
   var rooms: [Room] = []
-  var numberOfRooms: Int { return rooms.size }
+  comp var numberOfRooms: Int { return rooms.size }
   subscript(i: Int): Room {
     get { return rooms[i] }
     set { rooms[i] = newValue }

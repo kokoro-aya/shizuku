@@ -68,19 +68,19 @@ cst anotherPi = 3 + 0.14159
 
 
 /* Numeric Literals */
-/*
+
 cst decimalInteger = 17
 cst binaryInteger = 0b10001   // 17
 cst octalInteger = 0o21       // 17
 cst hexadecimalInteger = 0x11 // 17
 
 cst decimalDouble = 12.1875
-cst exponentDouble = 1.21875e1
+// cst exponentDouble = 1.21875e1
 
 cst paddedDouble = 000123.456
 cst oneMillion = 1_000_000
 cst justOverOneMillion = 1_000_000.000_000_1
- */
+
 
 
 /* Numeric Type Conversion */

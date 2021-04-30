@@ -11,7 +11,7 @@ open struct Rectangle (cst a: Int, cst b: Int) {
 
 struct Square(a: Int) ::: Rectangle {
     init {
-        super(a, a)
+        super.init(a, a)
     }
     cst print: () -> Void = { () ->
         print("The surface of square is", super.size())
@@ -25,6 +25,6 @@ struct Foo(a: Int, cst b: Double) {
 }
 /* will not achieve
 struct Bar(a: Int, b: Double, c: String) ::: A, B, C {
-    ::cst foo: Int = 3 // ::static, ## private
+    static cst foo: Int = 3 // ::static, ## private
 }
 */

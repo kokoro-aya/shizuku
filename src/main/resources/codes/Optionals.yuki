@@ -4,7 +4,7 @@ b = nil
 late cst c: Optional<Double>
 c = 5.5
 
-var b: Int?? = Optional.of(Optional.of(2))
+var b: Int?? = Optional(Optional(2))
 var c: Int = b?.unsafeGet()?.unsafeGet()
 
 print(c.add(4))

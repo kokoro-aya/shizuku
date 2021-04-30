@@ -39,7 +39,7 @@ struct Point(var x: Double = 0.0, var y: 0.0) {
 enum TriStateSwitch {
   case off, low, high
   func next() {
-    switch self {
+    switch self { // !!! must be in enum case!
       case ::off => {
         self = ::low
       }

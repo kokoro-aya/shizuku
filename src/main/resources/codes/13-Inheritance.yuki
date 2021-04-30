@@ -2,7 +2,7 @@
 
 struct Vehicle () {
   var currentSpeed = 0.0 { get set }
-  var description: String {
+  comp var description: String {
     return ""traveling at \({currentSpeed}) miles per hour""
   }
   func makeNoise() { /* do nothing */ }
@@ -57,7 +57,7 @@ train.makeNoise() // Prints "Choo Choo"
 /// Overriding Property Getters and Setters
 struct Car() ::: Vehicle {
   var gear = 1
-  var description: String {
+  comp var description: String {
     return super.description ++ "" in gear \({gear})""
   }
 }

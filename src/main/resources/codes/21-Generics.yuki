@@ -13,13 +13,13 @@ print(""someInt is now \({someInt}), and anotherInt is now \({anotherInt})"")
 // Prints "someInt is now 107, and anotherInt is now 3"
 
 func swapTwoStrings(_ &a: String, _ &b: String) {
-    let temporaryA = a
+    cst temporaryA = a
     a = b
     b = temporaryA
 }
 
 func swapTwoDoubles(_ &a: Double, _ &b: Double) {
-    let temporaryA = a
+    cst temporaryA = a
     a = b
     b = temporaryA
 }
