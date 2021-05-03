@@ -1,7 +1,7 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.4.32'
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.32'
+    id 'org.jetbrains.kotlin.jvm' version '1.5.0'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.5.0'
     id 'application'
 }
 
@@ -28,19 +28,19 @@ repositories {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
-    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.4.32'
+    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.5.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
 
     implementation 'org.antlr:antlr4:4.9.2'
 
-    implementation 'io.ktor:ktor-server-core:1.4.3'
-    implementation 'io.ktor:ktor-server-netty:1.4.3'
+    implementation 'io.ktor:ktor-server-core:1.5.4'
+    implementation 'io.ktor:ktor-server-netty:1.5.4'
     implementation 'ch.qos.logback:logback-classic:1.2.3'
-    implementation 'io.ktor:ktor-serialization:1.4.3'
-    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:0.20.0'
+    implementation 'io.ktor:ktor-serialization:1.5.4'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-core:1.2.0'
 
-    testImplementation 'io.ktor:ktor-server-tests:1.4.3'
+    testImplementation 'io.ktor:ktor-server-tests:1.5.4'
 }
 
 compileKotlin {
