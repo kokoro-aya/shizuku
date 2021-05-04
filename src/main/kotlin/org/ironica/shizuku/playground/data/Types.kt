@@ -1,8 +1,11 @@
 package org.ironica.shizuku.playground.data
 
-import org.ironica.shizuku.playground.tiles.Block
-import org.ironica.shizuku.playground.tiles.Item
+import org.ironica.shizuku.playground.Block
 
 typealias Grid = Array<Array<Block>>
+
+typealias MiscLayout = Array<Array<MiscInfo>>
+
 typealias Layout = Array<Array<Item>>
-typealias MiscLayout = Array<Array<Tile>>
+
+typealias Tiles = List<List<BlockObject>>

@@ -1,11 +1,11 @@
-package org.ironica.shizuku.runner
+package org.ironica.shizuku.runner.initrules.specialrules
 
 import kotlinx.serialization.Serializable
 import org.ironica.shizuku.playground.data.Coordinate
 
 @Serializable
-data class GemOrBeeper(
+data class ChangePlatform(
     val coo: Coordinate,
-    val appearIn: Int,
-    val disappearIn: Int = 0,
+    val inTurn: Int,
+    val toLevel: Int,
 )

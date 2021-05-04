@@ -7,14 +7,15 @@ import org.ironica.shizuku.runner.initrules.disabled.DisabledFeaturesList
 import org.ironica.shizuku.runner.initrules.playgroundrules.Rules
 import org.ironica.shizuku.runner.initrules.preinitialized.PreInitializedList
 import org.ironica.shizuku.runner.initrules.preinitialized.PreInitializedObject
+import org.ironica.shizuku.runner.initrules.specialrules.SpecialRules
 
 @Serializable
 data class IncomingData(
     val type: String,
     val code: String,
     val grid: Grid,
-    val layout: Layout,
-    val misc: MiscLayout,
+    val layout: Array<Array<ItemEnum>>,
+    val misc: Array<Array<String>>,
     val portals: Array<Portal> = arrayOf(),
     val locks: Array<Lock> = arrayOf(),
     val players: Array<PlayerData>,
@@ -24,6 +25,8 @@ data class IncomingData(
     ),
     val rules: Rules = Rules(),
     val stairs: Array<Stair> = arrayOf(),
-    val gems: Array<GemOrBeeper> = arrayOf(),
-    val beepers: Array<GemOrBeeper> = arrayOf(),
+    val platforms: Array<PlatformData> = arrayOf(),
+    val additionalGems: Array<GemOrBeeper> = arrayOf(),
+    val additionalBeepers: Array<GemOrBeeper> = arrayOf(),
+    val specialRules: SpecialRules = SpecialRules(),
 )

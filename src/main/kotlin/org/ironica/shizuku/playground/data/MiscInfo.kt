@@ -3,14 +3,11 @@ package org.ironica.shizuku.playground.data
 import kotlinx.serialization.Serializable
 import org.ironica.shizuku.playground.Color
 
-@Serializable
-sealed class Tile
+sealed class MiscInfo
 
-@Serializable
-data class ColorfulTile(var color: Color): Tile()
+data class ColorfulMiscInfo(var color: Color): MiscInfo()
 
-@Serializable
-data class MountainTile(var level: Int?): Tile() {
+data class MountainMiscInfo(var level: Int?): MiscInfo() {
     init {
         if (level != null && level!! < 0)
             level = null

@@ -4,8 +4,7 @@ import kotlinx.serialization.Serializable
 import org.ironica.shizuku.playground.data.Coordinate
 
 @Serializable
-data class GemOrBeeper(
+data class PlatformData(
     val coo: Coordinate,
-    val appearIn: Int,
-    val disappearIn: Int = 0,
+    val level: Int,
 )
