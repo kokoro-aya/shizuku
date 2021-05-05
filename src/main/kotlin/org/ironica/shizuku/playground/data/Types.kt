@@ -8,4 +8,4 @@ typealias MiscLayout = Array<Array<MiscInfo>>
 
 typealias Layout = Array<Array<Item>>
 
-typealias Tiles = List<List<BlockObject>>
+typealias Tiles = List<List<GridObject>>
