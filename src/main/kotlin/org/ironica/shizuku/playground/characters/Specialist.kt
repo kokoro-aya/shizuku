@@ -1,7 +1,11 @@
 package org.ironica.shizuku.playground.characters
 
-class Specialist(
+import org.ironica.shizuku.playground.Direction
 
-): Player() {
+class Specialist(
+    id: Int,
+    dir: Direction,
+    stamina: Int
+): Player(id, dir, stamina) {
 
 }

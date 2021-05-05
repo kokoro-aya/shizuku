@@ -17,6 +17,8 @@ interface AbstractPlayer {
 
     fun kill(): Boolean
 
+    fun setUpShelter(): Boolean
+
     val isOnGem: Boolean
     val isOnOpenedSwitch: Boolean
     val isOnClosedSwitch: Boolean
@@ -34,4 +36,7 @@ interface AbstractPlayer {
 
     val isAlive: Boolean
     val isDead: Boolean
+
+    val isInWinter: Boolean
+    val isInShelter: Boolean
 }

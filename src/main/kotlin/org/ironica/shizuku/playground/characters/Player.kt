@@ -6,10 +6,13 @@ import org.ironica.shizuku.playground.data.Coordinate
 
 open class Player(
     val id: Int,
-    val coo: Coordinate,
     var dir: Direction,
     var stamina: Int
 ): AbstractPlayer {
+
+    var inWaterForTurns: Int = 0
+    var inLaveForTurns: Int = 0
+
     override fun turnLeft(): Boolean {
         TODO("Not yet implemented")
     }
@@ -50,6 +53,10 @@ open class Player(
         TODO("Not yet implemented")
     }
 
+    override fun setUpShelter(): Boolean {
+        TODO("Not yet implemented")
+    }
+
     override val isOnGem: Boolean
         get() = TODO("Not yet implemented")
     override val isOnOpenedSwitch: Boolean
@@ -81,5 +88,9 @@ open class Player(
     override val isAlive: Boolean
         get() = TODO("Not yet implemented")
     override val isDead: Boolean
+        get() = TODO("Not yet implemented")
+    override val isInWinter: Boolean
+        get() = TODO("Not yet implemented")
+    override val isInShelter: Boolean
         get() = TODO("Not yet implemented")
 }

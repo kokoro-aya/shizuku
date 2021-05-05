@@ -1,6 +1,7 @@
 package org.ironica.shizuku.runner.initrules.playgroundrules
 
 import kotlinx.serialization.Serializable
+import org.ironica.shizuku.playground.Season
 
 @Serializable
 data class Rules(
@@ -27,7 +28,16 @@ data class Rules(
     val lavaRules: LavaRules = LavaRules(
         canJumpInto = false, dieAfterTurns = null, coolDown = null, willDisappear = false
     ),
-    val beeperRule: GemOrBeeperRule = GemOrBeeperRule(disappearAfter = 0, autoFail = false),
-    val gemRule: GemOrBeeperRule = GemOrBeeperRule(disappearAfter = 0, autoFail = false),
+    val beeperRules: GemOrBeeperRule = GemOrBeeperRule(disappearAfter = 0, autoFail = false),
+    val gemRules: GemOrBeeperRule = GemOrBeeperRule(disappearAfter = 0, autoFail = false),
+    val additionalGemOneAfterAnother: Boolean = false,
+    val additionalBeeperOneAfterAnother: Boolean = false,
+    val portalRules: PortalOrLockRule = PortalOrLockRule(defaultEnergy = 0, decreaseEachUsage = 0),
+    val lockRules: PortalOrLockRule = PortalOrLockRule(defaultEnergy = 0, decreaseEachUsage = 0),
+    val seasonRules: SeasonRules = SeasonRules(
+        hasWinter = false, amplitude = 1.0, winterDuration = 0, summerDuration = 1000,
+        shelterMaxCount = 0, maxPlayerPerShelter = 0, amplitudeWithoutShelter = 1.0,
+        startWith = Season.SUMMER,
+    )
 )
 

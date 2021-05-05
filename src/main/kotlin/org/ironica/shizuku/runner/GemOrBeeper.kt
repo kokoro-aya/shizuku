@@ -6,6 +6,6 @@ import org.ironica.shizuku.playground.data.Coordinate
 @Serializable
 data class GemOrBeeper(
     val coo: Coordinate,
-    val appearIn: Int,
+    var appearIn: Int, // a negative value indicates that it will appear after the last is consumed
     val disappearIn: Int = 0,
 )
