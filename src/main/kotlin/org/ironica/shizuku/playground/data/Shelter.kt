@@ -14,19 +14,25 @@ data class Shelter(
     val isFull: Boolean
         get() = inside.size >= availableFor
 
-    fun joinAPlayer(player: Player) {
-        assert(!isFull)
-        inside.add(player)
+    fun joinAPlayer(player: Player): Boolean {
+        return if (!isFull) {
+            inside.add(player)
+            true
+        } else false
     }
-    fun leaveAPlayer(player: Player) {
-        assert(inside.contains(player))
-        inside.remove(player)
+    fun leaveAPlayer(player: Player): Boolean {
+        return if (inside.contains(player)) {
+            inside.remove(player)
+            true
+        } else false
     }
     fun hasPlayer(player: Player): Boolean {
         return inside.contains(player)
     }
-    fun extend(specialist: Specialist, increase: Int) {
-        if (specialist.extendCount > 0)
+    fun extend(specialist: Specialist, increase: Int): Boolean {
+        return if (specialist.extendCount > 0) {
             availableFor += increase
+            true
+        } else false
     }
 }

@@ -123,15 +123,25 @@ class Playground(
             tiles[it.y][it.x].players.add(player)
         }
 
+        tiles.forEachIndexed { i, it -> it.forEachIndexed { j, it ->
+            if (it.block == HOME) homes.add(Home(
+                j, i, staminaRule.home.limit, staminaRule.home.coolDown
+            ))
+        } }
+
         players.map { it.key.playground = this }
 
         worlds.add(World(this))
     }
 
+    val initialSpecialistCount = players.keys.filterIsInstance<Specialist>().size
+    val initialPlayerCount = players.size - initialSpecialistCount
+
+    val homes = mutableListOf<Home>()
     val shelters = mutableListOf<Shelter>()
     val season = seasonRules.startWith
 
-    val status: GameStatus = GameStatus.PENDING
+    var status: GameStatus = GameStatus.PENDING
 
     fun win(): Boolean { return status == GameStatus.WIN }
     fun lose(): Boolean { return status == GameStatus.LOST }
@@ -244,8 +254,114 @@ class Playground(
             RIGHT -> DOWN
         }
     }
-    fun playerMoveForward(player: Player): Boolean {
 
+    private fun movePlayerUp(player: Player) {
+        val (x, y) = getCooFor(player).toPairXY()
+        tiles[y][x].players.remove(player)
+        tiles[y - 1][x].players.add(player)
+    }
+    private fun movePlayerDown(player: Player) {
+        val (x, y) = getCooFor(player).toPairXY()
+        tiles[y][x].players.remove(player)
+        tiles[y + 1][x].players.add(player)
+    }
+    private fun movePlayerLeft(player: Player) {
+        val (x, y) = getCooFor(player).toPairXY()
+        tiles[y][x].players.remove(player)
+        tiles[y][x - 1].players.add(player)
+    }
+    private fun movePlayerRight(player: Player) {
+        val (x, y) = getCooFor(player).toPairXY()
+        tiles[y][x].players.remove(player)
+        tiles[y][x + 1].players.add(player)
+    }
+
+    private fun incrementATurn() {
+        // Stamina check
+        val allPlayers = players.keys
+        allPlayers.forEach { it.stamina -= staminaRule.consumePerTurn }
+        allPlayers.forEach {
+            val bb = staminaRule.beeper.inBag; val bg = staminaRule.gem.inBag
+            it.stamina -= it.beeperInBag * bb.perTurn * bb.perItem + it.collectedGems * bg.perItem * bg.perTurn
+        }
+        allPlayers.forEach {
+            if (playerIsInDesert(it)) it.stamina -= staminaRule.inDesert
+            if (playerIsInForest(it)) it.stamina -= staminaRule.inForest
+            if (playerIsAtHome(it)) it.stamina += staminaRule.home.restore
+            if (playerIsInLava(it)) {
+                it.stamina -= staminaRule.inLava
+                it.inLaveForTurns += 1
+            }
+            if (playerIsInWater(it)) {
+                it.stamina -= staminaRule.swim.perTurn
+                it.inWaterForTurns += 1
+            }
+        }
+
+        // DieCondition (swim, lava, stamina)
+        // HomeDisappear
+        // LavaDisappear
+        // Terrain(Block) Changes
+        // Platform Changes
+        // GemDisappear and new Gems
+        // BeeperDisappear and new Beepers
+        // Winter
+
+        if (gameIsWin()) status = GameStatus.WIN
+        if (gameIsLost()) status = GameStatus.LOST
+
+        if (status != GameStatus.LOST) currentTurns += 1
+    }
+
+    private fun gameIsWin(): Boolean {
+        var conditions = 0
+        if (winCondition.allGemCollected && tiles.all { it.none { it.layout is Gem } }) conditions += 1
+        if (winCondition.allSwitch.on && tiles.all { it.none {
+                val l = it.layout
+                l is Switch && !l.on}}) conditions += 1
+        if (winCondition.allBeepersInBag && tiles.all { it.none { it.layout is Beeper }}) conditions += 1
+        if (winCondition.afterTurns in 1..currentTurns) conditions += 1
+        return conditions >= winCondition.satisfiedCondition
+    }
+    private fun gameIsLost(): Boolean {
+        val p = players.keys
+        if (loseCondition.afterTurns <= currentTurns) return true
+        if (loseCondition.onePlayerKilled && p.filterNot { it is Specialist }.size < initialPlayerCount) return true
+        if (loseCondition.oneSpecialistKilled && p.filterIsInstance<Specialist>().size < initialSpecialistCount) return true
+        if (loseCondition.allPlayerKilled && p.filterNot { it is Specialist }.isEmpty()) return true
+        if (loseCondition.allSpecialistKilled && p.filterIsInstance<Specialist>().isEmpty()) return true
+        if (loseCondition.allPlayerOrSpecialistKilled && p.isEmpty()) return true
+        if (loseCondition.notAllGemCollectedAfter in 1..currentTurns && tiles.any{ it.any { it.layout is Gem }}) return true
+        if (loseCondition.notAllBeeperTakenCondition != null) {
+            val n = loseCondition.notAllBeeperTakenCondition
+            if (n.inBag) {
+                if (n.after in 1..currentTurns && tiles.any{ it.any { it.layout is Beeper }}) return true
+            } else {
+                if (n.after in 1..currentTurns && p.any { it.beeperInBag > 0 }) return true
+            }
+        }
+        if (loseCondition.notAllSwitchToggledCondition != null) {
+            val n = loseCondition.notAllSwitchToggledCondition
+            if (n.on) {
+                if (n.after in 1..currentTurns && tiles.any{ it.any { val l = it.layout; l is Switch && !l.on }}) return true
+            } else {
+                if (n.after in 1..currentTurns && tiles.any{ it.any { val l = it.layout; l is Switch && l.on }}) return true
+            }
+        }
+        return false
+    }
+
+    fun playerMoveForward(player: Player): Boolean {
+        if (!playerIsBlocked(player) && player.stamina > 0) {
+            when(player.dir) {
+                UP -> movePlayerUp(player)
+                DOWN -> movePlayerDown(player)
+                LEFT -> movePlayerLeft(player)
+                RIGHT -> movePlayerRight(player)
+            }
+        }
+        incrementATurn()
+        return true
     }
     fun playerCollectGem(player: Player): Boolean {
 
@@ -287,7 +403,7 @@ class Playground(
     }
     fun playerIsAtHome(player: Player): Boolean {
         val (x, y) = getCooFor(player).toPairXY()
-        return tiles[y][x].block == HOME
+        return tiles[y][x].block == HOME && homes.any { it.content == player }
     }
     fun playerIsInDesert(player: Player): Boolean {
         val (x, y) = getCooFor(player).toPairXY()

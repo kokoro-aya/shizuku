@@ -9,8 +9,8 @@ data class LoseCondition(
     val allPlayerKilled: Boolean,
     val allSpecialistKilled: Boolean,
     val allPlayerOrSpecialistKilled: Boolean,
-    val notAllGemCollectedAfter: Int?,
+    val notAllGemCollectedAfter: Int,
     val notAllSwitchToggledCondition: NotAllSwitchToggledCondition?,
     val notAllBeeperTakenCondition: NotAllBeeperTakenCondition?,
-    val afterTurns: Int?,
+    val afterTurns: Int,
 )

@@ -7,6 +7,7 @@ data class StaminaRules(
     val initial: Int = 10000,
     val consumePerTurn: Int = 20,
     val inForest: Int = 50,
+    val inDesert: Int = 50,
     val turnAround: Int = 120,
     val moveForward: Int = 100,
     val portalTeleport: Int = 240,

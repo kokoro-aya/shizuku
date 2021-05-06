@@ -67,7 +67,7 @@ open class Player(
     override val isBlockedRight: Boolean
         get() = playground.playerIsBlockedRight(this)
     override val collectedGem: Int
-        get() = collectedGem
+        get() = collectedGems
     override val isAlive: Boolean
         get() = stamina > 0
     override val isDead: Boolean

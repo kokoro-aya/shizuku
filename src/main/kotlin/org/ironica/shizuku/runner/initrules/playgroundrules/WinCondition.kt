@@ -7,5 +7,6 @@ data class WinCondition(
     val allGemCollected: Boolean,
     val allSwitch: AllSwitchCondition,
     val allBeepersInBag: Boolean,
-    val afterTurns: Int?,
+    val afterTurns: Int,
+    val satisfiedCondition: Int,
 )
