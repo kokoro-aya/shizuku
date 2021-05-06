@@ -1,5 +1,6 @@
 package org.ironica.shizuku.manager
 
+import org.ironica.shizuku.playground.Color
 import org.ironica.shizuku.playground.Direction
 import org.ironica.shizuku.playground.characters.AbstractPlayer
 import org.ironica.shizuku.playground.characters.Player
@@ -99,9 +100,10 @@ interface AbstractManager {
     fun initializeSpecialist(name: String): PlayerObject
     fun initializeGem(): ItemObject
     fun initializeBeeper(): ItemObject
-    fun initializeSwitch(off: Boolean = true): ItemObject
+    fun initializeSwitch(off: Boolean): ItemObject
+    fun initializeSwitch(): ItemObject
     fun initializePlatform(level: Int): PlatformObject
-    fun initializePortal(active: Boolean = false): PortalObject
+    fun initializePortal(active: Boolean, color: Color): PortalObject
     fun initializeStair(): IntermediateItemObject
     fun initializeBlock(): BlockObject
     fun initializeBlocked(): BlockObject

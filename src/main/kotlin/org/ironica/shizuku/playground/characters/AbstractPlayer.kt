@@ -1,8 +1,15 @@
 package org.ironica.shizuku.playground.characters
 
 import org.ironica.shizuku.playground.Color
+import org.ironica.shizuku.playground.Direction
 
 interface AbstractPlayer {
+
+    val id: Int
+    var dir: Direction
+    var stamina: Int
+
+
     fun turnLeft(): Boolean
     fun turnRight(): Boolean
     fun moveForward(): Boolean

@@ -11,6 +11,7 @@ import org.ironica.shizuku.playground.Color
 import org.ironica.shizuku.playground.data.*
 import org.ironica.shizuku.playground.playground.Playground
 import org.ironica.shizuku.runner.initrules.disabled.DisabledFeaturesList
+import org.ironica.shizuku.runner.initrules.playgroundrules.AutoFailRule
 import org.ironica.shizuku.runner.initrules.playgroundrules.Rules
 import org.ironica.shizuku.runner.initrules.preinitialized.PreInitializedList
 import org.ironica.shizuku.runner.initrules.specialrules.ChangeBlock
@@ -21,25 +22,42 @@ import yukiLexer
 import yukiParser
 
 class YukiInterface(
-    val type: String,
-    val code: String,
-    val grid: Grid,
-    val layout: Array<Array<ItemEnum>>,
-    val misc: Array<Array<String>>,
-    val portals: Array<Portal>,
-    val locks: Array<Lock>,
-    val players: Array<PlayerData>,
+    private val type: String,
+    private val code: String,
+    private var tiles: Tiles = listOf(),
+    grid: Grid,
+    itemEnumLayout: Array<Array<ItemEnum>>,
+    misc: Array<Array<String>>,
+    private val portals: Array<Portal>,
+    private val locks: Array<Lock>,
+    private val players: Array<PlayerData>,
 
-    val disabledFeatures: DisabledFeaturesList,
-    val preInitializedObjects: PreInitializedList,
-    val rules: Rules,
+    private val disabledFeatures: DisabledFeaturesList,
+    private val preInitializedObjects: PreInitializedList,
+    private val rules: Rules,
 
-    val stairs: Array<Stair>,
-    val platforms: Array<PlatformData>,
-    val additionalGems: Array<GemOrBeeper>,
-    val additionalBeepers: Array<GemOrBeeper>,
-    val specialRules: SpecialRules
+    stairs: Array<Stair>,
+    platforms: Array<PlatformData>,
+
+    private val additionalGems: Array<GemOrBeeper>,
+    private val additionalBeepers: Array<GemOrBeeper>,
+    private val specialRules: SpecialRules
 ) {
+    init {
+        val layout = convertItemArrayToLayout(
+            itemArray = itemEnumLayout,
+            gemDisappearIn = rules.gemRules.disappearAfter,
+            beeperDisappearIn = rules.beeperRules.disappearAfter,
+            portalList = portals,
+            platformDataList = platforms,
+            platformChangeList = specialRules.changePlatforms
+        )
+        val miscLayout = convertJsonToMiscLayout(misc, type)
+        tiles = combineGridLayoutMiscStairToObj(grid, layout, miscLayout, type)
+        addStairsToTile(tiles, stairs)
+        injectChangesToTile(tiles, specialRules.changeBlocks)
+        assert (locks.all { checkAllControlledByLockAsPlatform(it, platforms) })
+    }
     fun start() {
         val input: CharStream = CharStreams.fromString(code)
         val lexer = yukiLexer(input)
@@ -48,7 +66,39 @@ class YukiInterface(
         val tree: ParseTree = parser.top_level()
 
         val playground = Playground(
-
+            tiles = tiles,
+            portals = portals.toMutableList(),
+            locks = locks.toList(),
+            playerDatas = players,
+            additionalGems = additionalGems.toMutableList(),
+            additionalBeepers = additionalBeepers.toMutableList(),
+            randomInitGems = specialRules.randomInitGem,
+            randomInitBeepers = specialRules.randomInitBeepers,
+            randomInitPortals = specialRules.randomInitPortals,
+            userCollision = rules.userCollision,
+            maxTerrainHeight = rules.maxTerrainHeight,
+            canStackOnTerrain = rules.canStackOnTerrain,
+            canPutBlockOnVoid = rules.canPutBlockOnVoid,
+            eraseTerrainCondition = rules.eraseTerrain,
+            winCondition = rules.winCondition,
+            loseCondition = rules.loseCondition,
+            staminaRule = rules.staminaRules,
+            swimRules = rules.swimRules,
+            lavaRules = rules.lavaRules,
+            beeperDisappearAfter = rules.beeperRules.disappearAfter,
+            gemDisappearAfter = rules.gemRules.disappearAfter,
+            autoFailRule = AutoFailRule(
+                beeperDisappear = rules.beeperRules.autoFail,
+                gemDisappear = rules.gemRules.autoFail,
+            ),
+            additionalBeeperOneAfterAnother = rules.additionalBeeperOneAfterAnother,
+            additionalGemOneAfterAnother = rules.additionalGemOneAfterAnother,
+            defaultPortalEnergy = rules.portalRules.defaultEnergy,
+            defaultLockEnergy = rules.lockRules.defaultEnergy,
+            decreaseEachUsageOfPortal = rules.portalRules.decreaseEachUsage,
+            decreaseEachUsageOfLock = rules.lockRules.decreaseEachUsage,
+            seasonRules = rules.seasonRules,
+            specialMessages = specialRules.specialMessages.toList(),
         )
         val manager = when(type) {
             "colorful" -> ColorfulManager(playground)
@@ -56,7 +106,7 @@ class YukiInterface(
             else -> throw Exception("Unsupported game module")
         }
         manager.appendEntry()
-        val exec = YukiVisitorImpl(manager)
+        val exec = YukiVisitorImpl(manager, disabledFeatures, preInitializedObjects)
         exec.visit(tree)
     }
 

@@ -3,12 +3,18 @@ package org.ironica.shizuku.playground.characters
 import org.ironica.shizuku.playground.Color
 import org.ironica.shizuku.playground.Direction
 import org.ironica.shizuku.playground.data.Coordinate
+import org.ironica.shizuku.playground.playground.Playground
 
 open class Player(
-    val id: Int,
-    var dir: Direction,
-    var stamina: Int
+    override val id: Int,
+    override var dir: Direction,
+    override var stamina: Int
 ): AbstractPlayer {
+
+    lateinit var playground: Playground
+
+    var collectedGems = 0
+    var beeperInBag = 0
 
     var inWaterForTurns: Int = 0
     var inLaveForTurns: Int = 0

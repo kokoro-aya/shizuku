@@ -2,8 +2,10 @@ package org.ironica.shizuku.playground.world
 
 import org.ironica.shizuku.playground.Direction
 import org.ironica.shizuku.playground.characters.Player
+import org.ironica.shizuku.playground.playground.Playground
 
-class World: AbstractWorld {
+class World(override var playground: Playground): AbstractWorld {
+
     override fun place(player: Player, atColumn: Int, row: Int) {
         TODO("Not yet implemented")
     }

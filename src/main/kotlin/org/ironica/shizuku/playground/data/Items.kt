@@ -16,7 +16,7 @@ data class Portal(
     val dest: Coordinate,
     val color: Color = Color.WHITE,
     var isActive: Boolean = true,
-) {
+): Item() {
     @Transient var energy: Int = 0
 }
 @Serializable

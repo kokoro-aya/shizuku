@@ -9,3 +9,5 @@ class Specialist(
 ): Player(id, dir, stamina) {
 
 }
+
+// Add exp level to specialist and lock requirement

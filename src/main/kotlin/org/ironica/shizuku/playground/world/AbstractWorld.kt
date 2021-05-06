@@ -2,10 +2,14 @@ package org.ironica.shizuku.playground.world
 
 import org.ironica.shizuku.playground.Direction
 import org.ironica.shizuku.playground.characters.Player
+import org.ironica.shizuku.playground.playground.Playground
 
 interface AbstractWorld {
-    fun place(player: Player, atColumn: Int, row: Int)
-    fun place(player: Player, at: CoordinateObject)
+
+    var playground: Playground
+
+    fun place(player: PlayerObject, atColumn: Int, row: Int)
+    fun place(player: PlayerObject, at: CoordinateObject)
     fun place(item: ItemObject, atColumn: Int, row: Int)
     fun place(item: ItemObject, at: CoordinateObject)
     fun place(platform: PlatformObject, atColumn: Int, row: Int)
