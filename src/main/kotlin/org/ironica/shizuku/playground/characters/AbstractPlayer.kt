@@ -11,10 +11,6 @@ interface AbstractPlayer {
     fun takeBeeper(): Boolean
     fun dropBeeper(): Boolean
 
-    fun changeColor(color: Color): Boolean
-
-    fun jump(): Boolean
-
     fun kill(): Boolean
 
     fun setUpShelter(): Boolean

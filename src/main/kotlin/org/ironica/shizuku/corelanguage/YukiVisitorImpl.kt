@@ -6,7 +6,9 @@ import org.antlr.v4.runtime.tree.RuleNode
 import org.antlr.v4.runtime.tree.TerminalNode
 import yukiVisitor
 
-class YukiVisitorImpl: yukiVisitor<Any> {
+class YukiVisitorImpl(
+
+): yukiVisitor<Any> {
     override fun visit(tree: ParseTree?): Any {
         TODO("Not yet implemented")
     }
