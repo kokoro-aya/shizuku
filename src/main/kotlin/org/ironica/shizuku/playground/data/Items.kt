@@ -19,5 +19,4 @@ data class Portal(
 ): Item() {
     @Transient var energy: Int = 0
 }
-@Serializable
 data class Platform(val level: Int, var changes: List<Pair<Int, Int>>? = null): Item()

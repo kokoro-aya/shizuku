@@ -1,8 +1,12 @@
 package org.ironica.shizuku.playground.playground
 
 import org.ironica.shizuku.playground.Block
-import org.ironica.shizuku.playground.Direction
+import org.ironica.shizuku.playground.Block.*
+import org.ironica.shizuku.playground.Color
+import org.ironica.shizuku.playground.Direction.*
 import org.ironica.shizuku.playground.Role
+import org.ironica.shizuku.playground.Season
+import org.ironica.shizuku.playground.characters.AbstractPlayer
 import org.ironica.shizuku.playground.characters.Player
 import org.ironica.shizuku.playground.characters.Specialist
 import org.ironica.shizuku.playground.data.*
@@ -21,7 +25,7 @@ class Playground(
     val players: MutableMap<Player, Coordinate> = mutableMapOf(),
     playerDatas: Array<PlayerData>,
 
-    var worlds: List<World>,
+    var worlds: MutableList<World> = mutableListOf(),
 
     val additionalGems: MutableList<GemOrBeeper>,
     val additionalBeepers: MutableList<GemOrBeeper>,
@@ -114,14 +118,18 @@ class Playground(
             val player = if (it.role == Role.PLAYER) Player(it.id, it.dir, it.stamina) else Specialist(it.id, it.dir, it.stamina)
             val coo = Coordinate(it.x, it.y)
             players[player] = coo
+            if (player is Specialist) player.extendCount = seasonRules.extendCount
             if (userCollision) assert(tiles[it.y][it.x].players.isEmpty())
             tiles[it.y][it.x].players.add(player)
         }
 
         players.map { it.key.playground = this }
 
-        worlds = listOf(World(this))
+        worlds.add(World(this))
     }
+
+    val shelters = mutableListOf<Shelter>()
+    val season = seasonRules.startWith
 
     val status: GameStatus = GameStatus.PENDING
 
@@ -132,10 +140,10 @@ class Playground(
     private fun prePrintTile(x: Int, y: Int): String {
         val tile = tiles[y][x]
         if (tile.players.isNotEmpty()) return when (tile.players[0].dir) {
-            Direction.UP -> "上"
-            Direction.DOWN -> "下"
-            Direction.LEFT -> "左"
-            Direction.RIGHT -> "右"
+            UP -> "上"
+            DOWN -> "下"
+            LEFT -> "左"
+            RIGHT -> "右"
         }
         if (tile.layout != None) return when (val t = tile.layout) {
             is Gem -> "钻"
@@ -146,17 +154,17 @@ class Playground(
             is None -> throw Exception("This is impossible")
         }
         else return when (tile.block) {
-            Block.OPEN -> "空"
-            Block.BLOCKED -> "障"
-            Block.WATER -> "水"
-            Block.TREE -> "林"
-            Block.DESERT -> "漠"
-            Block.HOME -> "屋"
-            Block.MOUNTAIN -> "山"
-            Block.STONE -> "石"
-            Block.LOCK -> "锁"
-            Block.NONE -> "无"
-            Block.LAVA -> "火"
+            OPEN -> "空"
+            BLOCKED -> "障"
+            WATER -> "水"
+            TREE -> "林"
+            DESERT -> "漠"
+            HOME -> "屋"
+            MOUNTAIN -> "山"
+            STONE -> "石"
+            LOCK -> "锁"
+            NONE -> "无"
+            LAVA -> "火"
         }
     }
 
@@ -169,11 +177,72 @@ class Playground(
         println()
     }
 
-    fun playerTurnLeft(player: Player): Boolean {
+    private fun getCooFor(player: Player): Coordinate {
+        return players[player] ?: throw Exception("Error: No Coordinate found for the querying player")
+    }
 
+    private fun isTileAccessible(tile: GridObject): Boolean {
+        return when (tile.block) {
+            NONE -> false
+            OPEN -> true
+            BLOCKED -> false
+            MOUNTAIN -> false
+            STONE -> false
+            WATER -> swimRules.canSwim
+            LAVA -> lavaRules.canJumpInto
+            TREE -> true
+            DESERT -> true
+            HOME -> true
+            LOCK -> false
+        }
+    }
+
+    private fun isBlockBlocked(from: GridObject, to: GridObject): Boolean {
+        if (!isTileAccessible(to)) return true
+        if (userCollision) return to.players.isNotEmpty()
+        return if (to.misc is MountainMiscInfo) {
+            val tm = to.misc as MountainMiscInfo
+            val tc = from.misc as MountainMiscInfo
+            tm.level != tc.level
+        } else false
+    }
+
+    private fun isBlockedYPlus(player: Player): Boolean {
+        val (x, y) = getCooFor(player).toPairXY()
+        if (y == 0) return true
+        return isBlockBlocked(tiles[y][x], tiles[y - 1][x])
+    }
+    private fun isBlockedYMinus(player: Player): Boolean {
+        val (x, y) = getCooFor(player).toPairXY()
+        if (y == tiles.size - 1) return true
+        return isBlockBlocked(tiles[y][x], tiles[y + 1][x])
+    }
+    private fun isBlockedXMinus(player: Player): Boolean {
+        val (x, y) = getCooFor(player).toPairXY()
+        if (x == 0) return true
+        return isBlockBlocked(tiles[y][x], tiles[y][x - 1])
+    }
+    private fun isBlockedXPlus(player: Player): Boolean {
+        val (x, y) = getCooFor(player).toPairXY()
+        if (x == tiles[0].size - 1) return true
+        return isBlockBlocked(tiles[y][x], tiles[y][x + 1])
+    }
+
+    fun playerTurnLeft(player: Player): Boolean {
+        player.dir = when (player.dir) {
+            UP -> LEFT
+            LEFT -> DOWN
+            DOWN -> RIGHT
+            RIGHT -> UP
+        }
     }
     fun playerTurnRight(player: Player): Boolean {
-
+        player.dir = when (player.dir) {
+            UP -> RIGHT
+            LEFT -> UP
+            DOWN -> LEFT
+            RIGHT -> DOWN
+        }
     }
     fun playerMoveForward(player: Player): Boolean {
 
@@ -197,52 +266,81 @@ class Playground(
 
     }
     fun playerIsOnGem(player: Player): Boolean {
-
+        val (x, y) = getCooFor(player).toPairXY()
+        return tiles[y][x].layout is Gem
     }
     fun playerIsOpOpenedSwitch(player: Player): Boolean {
+        val (x, y) = getCooFor(player).toPairXY()
+        val l = tiles[y][x].layout
+        return l is Switch && l.on
 
     }
     fun playerIsOnClosedSwitch(player: Player): Boolean {
+        val (x, y) = getCooFor(player).toPairXY()
+        val l = tiles[y][x].layout
+        return l is Switch && !l.on
 
     }
     fun playerIsOnBeeper(player: Player): Boolean {
-
+        val (x, y) = getCooFor(player).toPairXY()
+        return tiles[y][x].layout is Beeper
     }
     fun playerIsAtHome(player: Player): Boolean {
-
+        val (x, y) = getCooFor(player).toPairXY()
+        return tiles[y][x].block == HOME
     }
     fun playerIsInDesert(player: Player): Boolean {
-
+        val (x, y) = getCooFor(player).toPairXY()
+        return tiles[y][x].block == DESERT
     }
     fun playerIsInForest(player: Player): Boolean {
-
+        val (x, y) = getCooFor(player).toPairXY()
+        return tiles[y][x].block == TREE
     }
     fun playerIsInWater(player: Player): Boolean {
-
+        val (x, y) = getCooFor(player).toPairXY()
+        return tiles[y][x].block == WATER
     }
     fun playerIsInLava(player: Player): Boolean {
-
+        val (x, y) = getCooFor(player).toPairXY()
+        return tiles[y][x].block == LAVA
     }
     fun playerIsOnPortal(player: Player): Boolean {
-
+        val (x, y) = getCooFor(player).toPairXY()
+        return tiles[y][x].layout is Portal
     }
     fun playerIsBlocked(player: Player): Boolean {
-
+        return when (player.dir) {
+            UP -> isBlockedYPlus(player)
+            DOWN -> isBlockedYMinus(player)
+            LEFT -> isBlockedXMinus(player)
+            RIGHT -> isBlockedXPlus(player)
+        }
     }
     fun playerIsBlockedLeft(player: Player): Boolean {
-
+        return when (player.dir) {
+            RIGHT -> isBlockedYPlus(player)
+            LEFT -> isBlockedYMinus(player)
+            UP -> isBlockedXMinus(player)
+            DOWN -> isBlockedXPlus(player)
+        }
     }
     fun playerIsBlockedRight(player: Player): Boolean {
-
+        return when (player.dir) {
+            LEFT -> isBlockedYPlus(player)
+            RIGHT -> isBlockedYMinus(player)
+            DOWN -> isBlockedXMinus(player)
+            UP -> isBlockedXPlus(player)
+        }
     }
     fun playerIsInWinter(player: Player): Boolean {
-
+        return season == Season.WINTER
     }
     fun playerIsInShelter(player: Player): Boolean {
-
+        return shelters.any { it.hasPlayer(player) }
     }
 
-    fun playerChangeColor(player: Player): Boolean {
+    fun playerChangeColor(player: Player, color: Color): Boolean {
 
     }
     fun playerJump(player: Player): Boolean {
@@ -258,35 +356,35 @@ class Playground(
 
     }
 
-    fun worldPlace(player: Player, at: Coordinate) {
+    fun worldPlace(world: World, player: AbstractPlayer, at: Coordinate) {
 
     }
-    fun worldPlace(item: Item, at: Coordinate) {
+    fun worldPlace(world: World, item: Item, at: Coordinate) {
 
     }
-    fun worldPlace(platform: Platform, at: Coordinate) {
+    fun worldPlace(world: World, platform: Platform, at: Coordinate) {
 
     }
-    fun worldPlace(portal: Portal, atStart: Coordinate, atEnd: Coordinate) {
+    fun worldPlace(world: World, portal: Portal) {
 
     }
-    fun worldPlace(stair: Stair, facing: Direction, at: Coordinate) {
+    fun worldPlace(world: World, stair: Stair) {
 
     }
-    fun worldPlace(block: Block, at: Coordinate) {
+    fun worldPlace(world: World, block: Block, at: Coordinate) {
 
     }
 
-    fun levelDown(at: Coordinate) {
+    fun levelDown(world: World, at: Coordinate) {
 
     }
-    fun wait(turns: Int) {
+    fun wait(world: World, turns: Int) {
 
     }
-    fun setToWin() {
+    fun setToWin(world: World) {
 
     }
-    fun setToLost() {
+    fun setToLost(world: World) {
 
     }
 }

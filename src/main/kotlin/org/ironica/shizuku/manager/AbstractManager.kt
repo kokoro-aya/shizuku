@@ -18,22 +18,8 @@ interface AbstractManager {
     var consoleLog: String
     var special: String
 
-    val defaultPlayer: AbstractPlayer
-    val defaultWorld: AbstractWorld
-
-    fun getPlayer(id: Int): Player {
-        return playground.players.keys
-            .firstOrNull { it.id == id }
-            ?: throw Exception("No player with given id found!")
-    }
-
-    fun getWorld(id: Int): World {
-
-    }
-
-    fun getPortal(id: Int): Portal {
-
-    }
+    val defaultPlayer: AbstractPlayer?
+    val defaultWorld: AbstractWorld?
 
     fun printGrid() {
         return playground.printGrid()
@@ -73,6 +59,9 @@ interface AbstractManager {
     fun kill(id: Int): () -> Boolean
 
     fun setUpShelter(player: AbstractPlayer): () -> Boolean
+
+    // Portal common properties
+    fun isActive(portal: PortalObject): () -> Boolean
 
     // World common methods
     fun place(world: AbstractWorld, player: PlayerObject, atColumn: Int, row: Int)

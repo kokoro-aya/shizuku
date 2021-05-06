@@ -2,7 +2,6 @@ package org.ironica.shizuku.playground.characters
 
 import org.ironica.shizuku.playground.Color
 import org.ironica.shizuku.playground.Direction
-import org.ironica.shizuku.playground.data.Coordinate
 import org.ironica.shizuku.playground.playground.Playground
 
 open class Player(
@@ -19,84 +18,62 @@ open class Player(
     var inWaterForTurns: Int = 0
     var inLaveForTurns: Int = 0
 
-    override fun turnLeft(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun turnLeft(): Boolean = playground.playerTurnLeft(this)
 
-    override fun turnRight(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun turnRight(): Boolean = playground.playerTurnRight(this)
 
-    override fun moveForward(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun moveForward(): Boolean = playground.playerMoveForward(this)
 
-    override fun collectGem(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun collectGem(): Boolean = playground.playerCollectGem(this)
 
-    override fun toggleSwitch(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun toggleSwitch(): Boolean = playground.playerToggleSwitch(this)
 
-    override fun takeBeeper(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun takeBeeper(): Boolean = playground.playerTakeBeeper(this)
 
-    override fun dropBeeper(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun dropBeeper(): Boolean = playground.playerDropBeeper(this)
 
-    override fun changeColor(color: Color): Boolean {
-        TODO("Not yet implemented")
-    }
+    fun changeColor(color: Color): Boolean = playground.playerChangeColor(this, color)
 
-    override fun jump(): Boolean {
-        TODO("Not yet implemented")
-    }
+    open fun jump(): Boolean = playground.playerJump(this)
 
-    override fun kill(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun kill(): Boolean = playground.playerKill(this)
 
-    override fun setUpShelter(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun setUpShelter(): Boolean = playground.playerSetUpShelter(this)
 
     override val isOnGem: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.playerIsOnGem(this)
     override val isOnOpenedSwitch: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.playerIsOpOpenedSwitch(this)
     override val isOnClosedSwitch: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.playerIsOnClosedSwitch(this)
     override val isOnBeeper: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.playerIsOnBeeper(this)
     override val isAtHome: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.playerIsAtHome(this)
     override val isInDesert: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.playerIsInDesert(this)
     override val isInForest: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.playerIsInForest(this)
     override val isInWater: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.playerIsInWater(this)
     override val isInLava: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.playerIsInLava(this)
     override val isOnPortal: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.playerIsOnPortal(this)
     override val isBlocked: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.playerIsBlocked(this)
     override val isBlockedLeft: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.playerIsBlockedLeft(this)
     override val isBlockedRight: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.playerIsBlockedRight(this)
     override val collectedGem: Int
-        get() = TODO("Not yet implemented")
+        get() = collectedGem
     override val isAlive: Boolean
-        get() = TODO("Not yet implemented")
+        get() = stamina > 0
     override val isDead: Boolean
-        get() = TODO("Not yet implemented")
+        get() = !isAlive
     override val isInWinter: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.playerIsInWinter(this)
     override val isInShelter: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.playerIsInShelter(this)
 }

@@ -10,6 +10,8 @@ data class SeasonRules(
     val winterDuration: Int,
     val summerDuration: Int,
     val shelterMaxCount: Int,
+    val extendCapacity: Int,
+    val extendCount: Int,
     val maxPlayerPerShelter: Int,
     val amplitudeWithoutShelter: Double,
     val startWith: Season,

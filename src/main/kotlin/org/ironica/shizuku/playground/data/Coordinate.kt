@@ -8,4 +8,6 @@ data class Coordinate(var x: Int, var y: Int) {
     fun decrementX() { x -= 1 }
     fun incrementY() { y += 1 }
     fun decrementY() { y -= 1 }
+
+    fun toPairXY(): Pair<Int, Int> = Pair(x, y)
 }
