@@ -6,7 +6,9 @@ import kotlinx.serialization.Transient
 @Serializable
 data class Lock(
     val coo: Coordinate,
-    val controlled: Array<Coordinate>
+    val controlled: MutableList<Coordinate>
     ) {
     @Transient var energy: Int = 0
+
+
 }

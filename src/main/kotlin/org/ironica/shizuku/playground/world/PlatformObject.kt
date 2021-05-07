@@ -4,5 +4,6 @@ import org.ironica.shizuku.playground.ItemEnum
 
 data class PlatformObject(
     val content: ItemEnum = ItemEnum.PLATFORM,
-    val level: Int
+    val level: Int,
+    val controlledBy: LockObject
 )

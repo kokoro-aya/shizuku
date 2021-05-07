@@ -1,11 +1,8 @@
 package org.ironica.shizuku.playground.playground
 
-import org.ironica.shizuku.playground.Block
+import org.ironica.shizuku.playground.*
 import org.ironica.shizuku.playground.Block.*
-import org.ironica.shizuku.playground.Color
 import org.ironica.shizuku.playground.Direction.*
-import org.ironica.shizuku.playground.Role
-import org.ironica.shizuku.playground.Season
 import org.ironica.shizuku.playground.characters.AbstractPlayer
 import org.ironica.shizuku.playground.characters.Player
 import org.ironica.shizuku.playground.characters.Specialist
@@ -16,7 +13,6 @@ import org.ironica.shizuku.runner.GemOrBeeper
 import org.ironica.shizuku.runner.PlayerData
 import org.ironica.shizuku.runner.initrules.playgroundrules.*
 import org.ironica.shizuku.runner.initrules.specialrules.SpecialMessage
-import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -150,6 +146,9 @@ class Playground(
     private var inThisSeasonFor: Int = 0
 
     var status: GameStatus = GameStatus.PENDING
+
+    val playerCount: Int
+        get() = players.size
 
     fun win(): Boolean { return status == GameStatus.WIN }
     fun lose(): Boolean { return status == GameStatus.LOST }
@@ -721,7 +720,7 @@ class Playground(
                 tiles[p.dest.y][p.dest.x].players.add(player)
                 val amplitude = if (season == Season.WINTER) getAmplitudeForPlayer(player) else 1.0
                 player.stamina -= (staminaRule.portalTeleport * amplitude).roundToInt()
-                p.energy -= 1
+                p.energy -= decreaseEachUsageOfPortal
                 if (p.energy <= 0) p.isActive = false
                 return true
             }
@@ -751,7 +750,7 @@ class Playground(
                     }
                     val amplitude = if (season == Season.WINTER) getAmplitudeForPlayer(specialist) else 1.0
                     specialist.stamina -= (staminaRule.turnLock * amplitude).roundToInt()
-                    this.energy -= 1
+                    this.energy -= decreaseEachUsageOfLock
                     incrementATurn()
                     return true
                 }
@@ -772,7 +771,7 @@ class Playground(
                     }
                     val amplitude = if (season == Season.WINTER) getAmplitudeForPlayer(specialist) else 1.0
                     specialist.stamina -= (staminaRule.turnLock * amplitude).roundToInt()
-                    this.energy -= 1
+                    this.energy -= decreaseEachUsageOfLock
                     incrementATurn()
                     return true
                 }
@@ -797,35 +796,119 @@ class Playground(
         return false
     }
 
-    fun worldPlace(world: World, player: AbstractPlayer, at: Coordinate) {
-
+    fun worldPlace(player: AbstractPlayer, at: Coordinate): Boolean {
+        if (userCollision && tiles[at.y][at.x].players.isNotEmpty()) return false
+        player as Player
+        player.playground = this
+        tiles[at.y][at.x].players.add(player)
+        players[player] = at
+        return true
     }
-    fun worldPlace(world: World, item: Item, at: Coordinate) {
-
+    fun worldPlace(item: Item, at: Coordinate): Boolean {
+        tiles[at.y][at.x].let {
+            if (it.layout != None) return false
+            if (it.block == NONE) return false
+            it.layout = item
+            return true
+        }
     }
-    fun worldPlace(world: World, platform: Platform, at: Coordinate) {
-
+    fun worldPlace(platform: Platform, at: Coordinate): Boolean {
+        tiles[at.y][at.x].let {
+            if (it.layout != None) return false
+            it.layout = platform
+            return true
+        }
     }
-    fun worldPlace(world: World, portal: Portal) {
-
+    fun worldPlace(portal: Portal): Boolean {
+        tiles[portal.coo.y][portal.coo.x].let {
+            if (it.layout != None) return false
+            it.layout = portal
+            portals.add(portal)
+            return true
+        }
     }
-    fun worldPlace(world: World, stair: Stair) {
-
+    fun worldPlace(stair: Stair): Boolean {
+        tiles[stair.coo.y][stair.coo.x].let {
+            if (it.block == NONE) return false
+            if (it.stairs.contains(stair.dir)) return false
+            it.stairs.add(stair.dir)
+            return true
+        }
     }
-    fun worldPlace(world: World, block: Block, at: Coordinate) {
-
+    fun worldPlace(block: Block, at: Coordinate): Boolean {
+        tiles[at.y][at.x].let {
+            when (block) {
+                NONE -> {
+                    removeEverythingOnTile(at.x, at.y)
+                }
+                LAVA -> {
+                    lavas.add(Lava(at.x, at.y, 0))
+                }
+                else -> {
+                }
+            }
+            it.block = block
+        }
+        return true
     }
 
-    fun levelDown(world: World, at: Coordinate) {
-
+    private fun removeEverythingOnTile(x: Int, y: Int) {
+        assert (x in 0 .. tiles[0].size && y in 0 .. tiles.size)
+        tiles[y][x].let {
+            when (it.layout) {
+                is Platform -> {
+                    with (Coordinate(x, y)) {
+                        locks.filter { l -> l.controlled.contains(this) }
+                            .forEach { l -> l.controlled.remove(this) }
+                    }
+                }
+                is Portal -> {
+                    portals.remove(it.layout)
+                }
+                else -> {}
+            }
+            it.layout = None
+            it.stairs.clear()
+        }
+        if (y > 1) tiles[y - 1][x].let {
+            if (it.stairs.contains(DOWN)) it.stairs.remove(DOWN)
+        }
+        if (y < tiles.size - 1) tiles[y + 1][x].let {
+            if (it.stairs.contains(UP)) it.stairs.remove(UP)
+        }
+        if (x > 1) tiles[y][x - 1].let {
+            if (it.stairs.contains(RIGHT)) it.stairs.remove(RIGHT)
+        }
+        if (x < tiles[0].size - 1) tiles[y][x + 1].let {
+            if (it.stairs.contains(LEFT)) it.stairs.remove(LEFT)
+        }
     }
-    fun wait(world: World, turns: Int) {
 
+    fun levelDown(at: Coordinate): Boolean {
+        assert (tiles[0][0].misc is MountainMiscInfo)
+        (tiles[at.y][at.x].misc as MountainMiscInfo).let {
+            return if (it.level != null) {
+                it.level = it.level?.minus(1)
+                true
+            } else false
+        }
     }
-    fun setToWin(world: World) {
-
+    fun waitATurn(): Boolean {
+        incrementATurn()
+        return true
     }
-    fun setToLost(world: World) {
+    fun setToWin(): Boolean {
+        status = GameStatus.WIN
+        return true
+    }
+    fun setToLost(): Boolean {
+        status = GameStatus.LOST
+        return true
+    }
 
+    fun getHeight(x: Int, y: Int): Int {
+        return tiles[y][x].misc.let {
+            if (it is MountainMiscInfo) it.level ?: 1 else 1
+        }
     }
 }

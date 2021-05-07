@@ -3,6 +3,7 @@ package org.ironica.shizuku.playground.data
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.ironica.shizuku.playground.Color
+import org.ironica.shizuku.playground.characters.Player
 
 sealed class Item
 
@@ -19,4 +20,6 @@ data class Portal(
 ): Item() {
     @Transient var energy: Int = 0
 }
-data class Platform(var level: Int, var changes: List<Pair<Int, Int>>? = null): Item()
+data class Platform(var level: Int, var changes: List<Pair<Int, Int>>? = null): Item() {
+    @Transient val players: MutableList<Player> = mutableListOf()
+}

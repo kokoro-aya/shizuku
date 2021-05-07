@@ -64,8 +64,8 @@ interface AbstractManager {
     fun isActive(portal: PortalObject): () -> Boolean
 
     // World common methods
-    fun place(world: AbstractWorld, player: PlayerObject, atColumn: Int, row: Int)
-    fun place(world: AbstractWorld, player: PlayerObject, at: CoordinateObject)
+    fun place(world: AbstractWorld, player: PlayerObject, facing: Direction, atColumn: Int, row: Int)
+    fun place(world: AbstractWorld, player: PlayerObject, facing: Direction, at: CoordinateObject)
     fun place(world: AbstractWorld, item: ItemObject, atColumn: Int, row: Int)
     fun place(world: AbstractWorld, item: ItemObject, at: CoordinateObject)
     fun place(world: AbstractWorld, platform: PlatformObject, atColumn: Int, row: Int)

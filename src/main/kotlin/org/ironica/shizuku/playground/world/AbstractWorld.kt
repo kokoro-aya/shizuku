@@ -8,23 +8,23 @@ interface AbstractWorld {
 
     var playground: Playground
 
-    fun place(player: PlayerObject, atColumn: Int, row: Int)
-    fun place(player: PlayerObject, at: CoordinateObject)
-    fun place(item: ItemObject, atColumn: Int, row: Int)
-    fun place(item: ItemObject, at: CoordinateObject)
-    fun place(platform: PlatformObject, atColumn: Int, row: Int)
-    fun place(platform: PlatformObject, at: CoordinateObject)
-    fun place(portal: PortalObject, atStartColumn: Int, startRow: Int, atEndColumn: Int, endRow: Int)
-    fun place(portal: PortalObject, atStart: CoordinateObject, atEnd: CoordinateObject)
-    fun place(stair: IntermediateItemObject, facing: Direction, atColumn: Int, row: Int)
-    fun place(stair: IntermediateItemObject, facing: Direction, at: CoordinateObject)
-    fun place(block: BlockObject, atColumn: Int, row: Int)
-    fun place(block: BlockObject, at: CoordinateObject)
+    fun place(player: PlayerObject, facing: Direction, atColumn: Int, row: Int): Boolean
+    fun place(player: PlayerObject, facing: Direction, at: CoordinateObject): Boolean
+    fun place(item: ItemObject, atColumn: Int, row: Int): Boolean
+    fun place(item: ItemObject, at: CoordinateObject): Boolean
+    fun place(platform: PlatformObject, atColumn: Int, row: Int): Boolean
+    fun place(platform: PlatformObject, at: CoordinateObject): Boolean
+    fun place(portal: PortalObject, atStartColumn: Int, startRow: Int, atEndColumn: Int, endRow: Int): Boolean
+    fun place(portal: PortalObject, atStart: CoordinateObject, atEnd: CoordinateObject): Boolean
+    fun place(stair: IntermediateItemObject, facing: Direction, atColumn: Int, row: Int): Boolean
+    fun place(stair: IntermediateItemObject, facing: Direction, at: CoordinateObject): Boolean
+    fun place(block: BlockObject, atColumn: Int, row: Int): Boolean
+    fun place(block: BlockObject, at: CoordinateObject): Boolean
 
-    fun levelDown(atColumn: Int, row: Int)
-    fun levelDown(at: CoordinateObject)
+    fun levelDown(atColumn: Int, row: Int): Boolean
+    fun levelDown(at: CoordinateObject): Boolean
 
-    fun wait(turns: Int)
-    fun win()
-    fun lose()
+    fun waitATurn(): Boolean
+    fun win(): Boolean
+    fun lose(): Boolean
 }
