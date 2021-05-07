@@ -32,6 +32,8 @@ open class Player(
 
     override fun dropBeeper(): Boolean = playground.playerDropBeeper(this)
 
+    override fun stepIntoPortal(): Boolean = playground.playerStepIntoPortal(this)
+
     fun changeColor(color: Color): Boolean = playground.playerChangeColor(this, color)
 
     open fun jump(): Boolean = playground.playerJump(this)
@@ -43,7 +45,7 @@ open class Player(
     override val isOnGem: Boolean
         get() = playground.playerIsOnGem(this)
     override val isOnOpenedSwitch: Boolean
-        get() = playground.playerIsOpOpenedSwitch(this)
+        get() = playground.playerIsOnOpenedSwitch(this)
     override val isOnClosedSwitch: Boolean
         get() = playground.playerIsOnClosedSwitch(this)
     override val isOnBeeper: Boolean

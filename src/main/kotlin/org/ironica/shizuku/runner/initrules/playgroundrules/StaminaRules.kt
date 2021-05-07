@@ -12,10 +12,11 @@ data class StaminaRules(
     val moveForward: Int = 100,
     val portalTeleport: Int = 240,
     val changeColor: Int = 0,
+    val turnLock: Int = 50,
     val jump: Int = 150,
     val inLava: Int = 4500,
     val home: HomeStaminaRule = HomeStaminaRule(
-        limit = 5, restore = 500, wait = 5, coolDown = 10,
+        limit = 5, restore = 500, coolDown = 10,
     ),
     val beeper: BeeperStaminaRule = BeeperStaminaRule(
         take = 40, drop = 50, inBag = InBagRule(perItem = 10, perTurn = 5)

@@ -18,6 +18,8 @@ interface AbstractPlayer {
     fun takeBeeper(): Boolean
     fun dropBeeper(): Boolean
 
+    fun stepIntoPortal(): Boolean
+
     fun kill(): Boolean
 
     fun setUpShelter(): Boolean

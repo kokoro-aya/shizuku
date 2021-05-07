@@ -30,6 +30,10 @@ data class Home(
         } else false
     }
 
+    fun decrementCoolDown() {
+        if (coolDownCounter > 0) coolDownCounter --
+    }
+
     val destroyed: Boolean
         get() = used >= limit
     val vacant: Boolean
