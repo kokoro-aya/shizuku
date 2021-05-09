@@ -1,11 +1,10 @@
-package org.ironica.shizuku.runner.initrules.specialrules
+package org.ironica.shizuku.runner.data
 
 import kotlinx.serialization.Serializable
 import org.ironica.shizuku.playground.tile.Coordinate
 
 @Serializable
-data class ChangePlatform(
+data class LockData(
     val coo: Coordinate,
-    val inTurn: Int,
-    val toLevel: Int,
-)
+    val controlled: MutableList<Coordinate>
+    )

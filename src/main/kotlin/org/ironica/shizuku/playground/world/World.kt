@@ -5,7 +5,7 @@ import org.ironica.shizuku.playground.ItemEnum
 import org.ironica.shizuku.playground.Role
 import org.ironica.shizuku.playground.characters.Player
 import org.ironica.shizuku.playground.characters.Specialist
-import org.ironica.shizuku.playground.data.*
+import org.ironica.shizuku.playground.tile.*
 import org.ironica.shizuku.playground.playground.Playground
 
 class World(override var playground: Playground): AbstractWorld {

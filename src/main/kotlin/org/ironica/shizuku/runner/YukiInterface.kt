@@ -7,9 +7,12 @@ import org.antlr.v4.runtime.tree.ParseTree
 import org.ironica.shizuku.corelanguage.YukiVisitorImpl
 import org.ironica.shizuku.manager.ColorfulManager
 import org.ironica.shizuku.manager.MountainousManager
+import org.ironica.shizuku.playground.Biomes
+import org.ironica.shizuku.playground.Block
 import org.ironica.shizuku.playground.Color
-import org.ironica.shizuku.playground.data.*
+import org.ironica.shizuku.playground.tile.*
 import org.ironica.shizuku.playground.playground.Playground
+import org.ironica.shizuku.runner.data.*
 import org.ironica.shizuku.runner.initrules.disabled.DisabledFeaturesList
 import org.ironica.shizuku.runner.initrules.playgroundrules.AutoFailRule
 import org.ironica.shizuku.runner.initrules.playgroundrules.Rules
@@ -17,7 +20,7 @@ import org.ironica.shizuku.runner.initrules.preinitialized.PreInitializedList
 import org.ironica.shizuku.runner.initrules.specialrules.ChangeBlock
 import org.ironica.shizuku.runner.initrules.specialrules.ChangePlatform
 import org.ironica.shizuku.runner.initrules.specialrules.SpecialRules
-import org.ironica.shizuku.utils.zipThree2DArrayToObjArrayWith
+import org.ironica.shizuku.utils.zipNine2DArrayToObjArrayWith
 import yukiLexer
 import yukiParser
 
@@ -26,25 +29,31 @@ class YukiInterface(
     private val code: String,
     private var tiles: Tiles = listOf(),
     grid: Grid,
-    itemEnumLayout: Array<Array<ItemEnum>>,
+    itemEnumLayout: Array<Array<Array<ItemEnum>>>,
     misc: Array<Array<String>>,
     private val portals: Array<Portal>,
-    private val locks: Array<Lock>,
+    private val lockdatas: Array<LockData>,
+    private var locks: MutableList<Lock>,
     private val players: Array<PlayerData>,
 
     private val disabledFeatures: DisabledFeaturesList,
     private val preInitializedObjects: PreInitializedList,
     private val rules: Rules,
 
-    stairs: Array<Stair>,
+    biomes: Array<Array<Biomes>>,
+
+    stairs: Array<StairData>,
     platforms: Array<PlatformData>,
+    ruins: Array<RuinData>,
+    shelters: Array<ShelterData>,
+    villages: Array<VillageData>,
 
     private val additionalGems: Array<GemOrBeeper>,
     private val additionalBeepers: Array<GemOrBeeper>,
     private val specialRules: SpecialRules
 ) {
     init {
-        val layout = convertItemArrayToLayout(
+        val itemLayout = convertItemArrayToLayout(
             itemArray = itemEnumLayout,
             gemDisappearIn = rules.gemRules.disappearAfter,
             beeperDisappearIn = rules.beeperRules.disappearAfter,
@@ -52,9 +61,25 @@ class YukiInterface(
             platformDataList = platforms,
             platformChangeList = specialRules.changePlatforms
         )
-        val miscLayout = convertJsonToMiscLayout(misc, type)
-        tiles = combineGridLayoutMiscStairToObj(grid, layout, miscLayout, type)
-        addStairsToTile(tiles, stairs)
+        val levelLayout = convertJsonToLevelLayout(misc, using = type)
+        val colorLayout = convertJsonToColorLayout(misc, using = type)
+        val switches = convertItemLayoutToSwitches(itemLayout)
+        val gems = convertItemLayoutToGems(itemLayout)
+        val beepers = convertItemLayoutToBeepers(itemLayout)
+        val portals = convertItemLayoutToPortals(itemLayout)
+        val platformss = convertItemLayoutToPlatform(itemLayout)
+        val layouts = convertGridToTiles(grid, ruins, shelters, villages, stairs, lockdatas)
+        tiles = combineTilesLevelColorBiomesItemsToObj(
+            tiles = layouts,
+            levels = levelLayout,
+            colors = colorLayout,
+            biomes = biomes,
+            switches = switches,
+            gems = gems,
+            beepers = beepers,
+            portals = portals,
+            platforms = platformss,
+        )
         injectChangesToTile(tiles, specialRules.changeBlocks)
         assert (locks.all { checkAllControlledByLockAsPlatform(it, platforms) })
     }
@@ -110,45 +135,146 @@ class YukiInterface(
         exec.visit(tree)
     }
 
-    private fun combineGridLayoutMiscStairToObj(
+    private fun convertGridToTiles(
         grid: Grid,
-        layout: Layout,
-        misc: MiscLayout,
-        using: String,
+        ruins: Array<RuinData>,
+        shelters: Array<ShelterData>,
+        villages: Array<VillageData>,
+        stairs: Array<StairData>,
+        lockdatas: Array<LockData>,
+    ): Array<Array<Layout>> {
+        return grid.mapIndexed { i, line ->
+            line.mapIndexed { j, block -> when (block) {
+                Block.NONE -> None
+                Block.OPEN -> Open
+                Block.HILL -> Hill
+                Block.STONE -> Stone
+                Block.WATER -> Water
+                Block.LAVA -> Lava(existsFor = 0)
+                Block.TREE -> Tree
+                Block.RUIN -> {
+                    Ruin(ruins.firstOrNull { it.coo.x == j && it.coo.y == i }?.type
+                        ?: throw Exception())
+                }
+                Block.SHELTER -> {
+                    Shelter(shelters.firstOrNull { it.coo.x == j && it.coo.y == i }?.availableFor
+                        ?: throw Exception())
+                }
+                Block.VILLAGE -> {
+                    Village(villages.firstOrNull { it.coo.x == j && it.coo.y == i }?.size
+                        ?: throw Exception())
+                }
+                Block.STAIR -> {
+                    Stair(stairs.firstOrNull { it.coo.x == j && it.coo.y == i }?.dir
+                        ?: throw Exception())
+                }
+                Block.LOCK -> {
+                    lockdatas.firstOrNull { it.coo.x == j && it.coo.y == i }?.let {
+                        val l = Lock(it.controlled, 0)
+                        locks.add(l)
+                        l
+                    } ?: throw Exception()
+                }
+            } }.toTypedArray()
+        }.toTypedArray()
+    }
+
+    private fun combineTilesLevelColorBiomesItemsToObj(
+        tiles: Array<Array<Layout>>,
+        levels: Array<Array<Int>>,
+        colors: Array<Array<Color>>,
+        biomes: Array<Array<Biomes>>,
+        switches: Array<Array<Switch?>>,
+        gems: Array<Array<Gem?>>,
+        beepers: Array<Array<Beeper?>>,
+        portals: Array<Array<Portal?>>,
+        platforms: Array<Array<Platform?>>,
     ): Tiles {
-        val x = grid.size
-        val y = grid[0].size
-        assert (layout.size == x && misc.size == x
-                && layout[0].size == y && misc[0].size == y
-        ) { "Grid, Layout and Misc must have same size!" }
-        return zipThree2DArrayToObjArrayWith(grid, layout, misc,
-            with = { a, b, c -> GridObject(a, b, c, mutableListOf(), mutableListOf()) }
+        return zipNine2DArrayToObjArrayWith(tiles, levels, colors, biomes, switches, gems, beepers, portals, platforms,
+            with = { a: Layout, b: Int, c: Color, d: Biomes, e: Switch?, f: Gem?, g: Beeper?, h: Portal?, i: Platform? -> Tile(
+                layout = a,
+                blocked = mutableListOf(),
+                level = b,
+                color = c,
+                biome = d,
+                switch = e,
+                gem = f,
+                beeper = g,
+                portal = h,
+                platform = i,
+                players = mutableListOf(),
+                changes = null,
+            ) }
         )
     }
 
+    private fun convertItemLayoutToSwitches(array: Array<Array<Array<Item?>>>): Array<Array<Switch?>> {
+        return array.map { it.map {
+            it.firstOrNull { it is Switch? } as Switch?
+        }.toTypedArray() }.toTypedArray()
+    }
+
+    private fun convertItemLayoutToGems(array: Array<Array<Array<Item?>>>): Array<Array<Gem?>> {
+        return array.map { it.map {
+            it.firstOrNull { it is Gem? } as Gem?
+        }.toTypedArray() }.toTypedArray()
+    }
+
+    private fun convertItemLayoutToBeepers(array: Array<Array<Array<Item?>>>): Array<Array<Beeper?>> {
+        return array.map { it.map {
+            it.firstOrNull { it is Beeper? } as Beeper?
+        }.toTypedArray() }.toTypedArray()
+    }
+
+    private fun convertItemLayoutToPortals(array: Array<Array<Array<Item?>>>): Array<Array<Portal?>> {
+        return array.map { it.map {
+            it.firstOrNull { it is Portal? } as Portal?
+        }.toTypedArray() }.toTypedArray()
+    }
+
+    private fun convertItemLayoutToPlatform(array: Array<Array<Array<Item?>>>): Array<Array<Platform?>> {
+        return array.map { it.map {
+            it.firstOrNull { it is Platform? } as Platform?
+        }.toTypedArray() }.toTypedArray()
+    }
+
     private fun convertItemArrayToLayout(
-        itemArray: Array<Array<ItemEnum>>,
+        itemArray: Array<Array<Array<ItemEnum>>>,
         gemDisappearIn: Int,
         beeperDisappearIn: Int,
         portalList: Array<Portal>,
         platformDataList: Array<PlatformData>,
         platformChangeList: Array<ChangePlatform>
-    ): Layout {
+    ): Array<Array<Array<Item?>>> {
         return itemArray.mapIndexed { i, line ->
             line.mapIndexed { j, item ->
-                when (item) {
-                    ItemEnum.NONE -> None
-                    ItemEnum.CLOSEDSWITCH -> Switch(on = false)
-                    ItemEnum.OPENEDSWITCH -> Switch(on = true)
-                    ItemEnum.GEM -> Gem(gemDisappearIn)
-                    ItemEnum.BEEPER -> Beeper(beeperDisappearIn)
-                    ItemEnum.PORTAL ->
-                        getPortalInListByCoo(portalList, Coordinate(j, i))
-                    ItemEnum.PLATFORM ->
-                        getPlatformInListByCoo(platformDataList, platformChangeList, Coordinate(j, i))
-                } as Item
+                val items = item.map {
+                    convertAnItemEnumToItem(it, gemDisappearIn, beeperDisappearIn, portalList, platformDataList, platformChangeList, i, j) }
+                items.toTypedArray()
             }.toTypedArray()
         }.toTypedArray()
+    }
+
+    private fun convertAnItemEnumToItem(
+        item: ItemEnum,
+        gemDisappearIn: Int,
+        beeperDisappearIn: Int,
+        portalList: Array<Portal>,
+        platformDataList: Array<PlatformData>,
+        platformChangeList: Array<ChangePlatform>,
+        i: Int, j: Int
+    ): Item? {
+        return when (item) {
+            ItemEnum.NONE -> null
+            ItemEnum.CLOSEDSWITCH -> Switch(on = false)
+            ItemEnum.OPENEDSWITCH -> Switch(on = true)
+            ItemEnum.GEM -> Gem(gemDisappearIn)
+            ItemEnum.BEEPER -> Beeper(beeperDisappearIn)
+            ItemEnum.PORTAL ->
+                getPortalInListByCoo(portalList, Coordinate(j, i))
+            ItemEnum.PLATFORM ->
+                getPlatformInListByCoo(platformDataList, platformChangeList, Coordinate(j, i))
+        }
     }
 
     private fun getPortalInListByCoo(portalList: Array<Portal>, coo: Coordinate): Portal {
@@ -165,10 +291,6 @@ class YukiInterface(
         )
     }
 
-    private fun addStairsToTile(tiles: Tiles, stairs: Array<Stair>) {
-        stairs.forEach { tiles[it.coo.y][it.coo.x].stairs.add(it.dir) }
-    }
-
     private fun injectChangesToTile(tiles: Tiles, changeBlocks: Array<ChangeBlock>) {
         changeBlocks.forEach {
             val tile = tiles[it.coo.y][it.coo.x]
@@ -181,10 +303,18 @@ class YukiInterface(
         }
     }
 
-    private fun convertJsonToMiscLayout(array: Array<Array<String>>, using: String): MiscLayout {
+    private fun convertJsonToLevelLayout(array: Array<Array<String>>, using: String): Array<Array<Int>> {
         return when (using) {
-            "colorful" -> array.map { it.map { ColorfulMiscInfo(convertDataToColor(it)) as MiscInfo }.toTypedArray() }.toTypedArray()
-            "mountainous" -> array.map { it.map { MountainMiscInfo(it.toIntOrNull()) as MiscInfo }.toTypedArray() }.toTypedArray()
+            "colorful" -> array.map { it.map { 1 }.toTypedArray() }.toTypedArray()
+            "mountainous", "creative" -> array.map { it.map { it.toIntOrNull() ?: 1 }.toTypedArray() }.toTypedArray()
+            else -> throw Exception("Unsupported game module")
+        }
+    }
+
+    private fun convertJsonToColorLayout(array: Array<Array<String>>, using: String): Array<Array<Color>> {
+        return when (using) {
+            "colorful" -> array.map { it.map { convertDataToColor(it) }.toTypedArray() }.toTypedArray()
+            "mountainous", "creative" -> array.map { it.map { Color.WHITE }.toTypedArray() }.toTypedArray()
             else -> throw Exception("Unsupported game module")
         }
     }

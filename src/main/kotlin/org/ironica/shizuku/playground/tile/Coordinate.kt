@@ -1,4 +1,4 @@
-package org.ironica.shizuku.playground.data
+package org.ironica.shizuku.playground.tile
 
 import kotlinx.serialization.Serializable
 

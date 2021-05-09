@@ -1,4 +1,4 @@
-package org.ironica.shizuku.playground.data
+package org.ironica.shizuku.playground.tile
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -7,7 +7,6 @@ import org.ironica.shizuku.playground.characters.Player
 
 sealed class Item
 
-object None: Item()
 data class Switch(var on: Boolean): Item()
 data class Gem(var disappearIn: Int): Item()
 data class Beeper(var disappearIn: Int): Item()

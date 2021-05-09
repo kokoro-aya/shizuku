@@ -3,8 +3,10 @@ package org.ironica.shizuku.playground
 enum class Block {
     NONE,
     OPEN,
-    BLOCKED, MOUNTAIN, STONE,
+    HILL, STONE,
     WATER, LAVA,
-    TREE, DESERT, HOME,
+    TREE, RUIN,
+    SHELTER, VILLAGE,
+    STAIR,
     LOCK
 }

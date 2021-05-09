@@ -1,10 +1,10 @@
 package org.ironica.shizuku.playground.payload
 
 import kotlinx.serialization.Serializable
-import org.ironica.shizuku.playground.data.Grid
-import org.ironica.shizuku.playground.data.Layout
-import org.ironica.shizuku.playground.data.MiscLayout
-import org.ironica.shizuku.playground.data.Portal
+import org.ironica.shizuku.playground.tile.Grid
+import org.ironica.shizuku.playground.tile.Layout
+import org.ironica.shizuku.playground.tile.MiscLayout
+import org.ironica.shizuku.playground.tile.Portal
 
 @Serializable
 data class PlaygroundPayload(

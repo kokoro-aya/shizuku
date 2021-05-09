@@ -3,12 +3,6 @@ package org.ironica.shizuku.manager
 import org.ironica.shizuku.playground.Color
 import org.ironica.shizuku.playground.Direction
 import org.ironica.shizuku.playground.characters.AbstractPlayer
-import org.ironica.shizuku.playground.characters.Player
-import org.ironica.shizuku.playground.characters.Specialist
-import org.ironica.shizuku.playground.data.Beeper
-import org.ironica.shizuku.playground.data.Gem
-import org.ironica.shizuku.playground.data.Portal
-import org.ironica.shizuku.playground.data.Switch
 import org.ironica.shizuku.playground.message.GameStatus
 import org.ironica.shizuku.playground.playground.Playground
 import org.ironica.shizuku.playground.world.*

@@ -1,7 +1,7 @@
 package org.ironica.shizuku.runner
 
 import kotlinx.serialization.Serializable
-import org.ironica.shizuku.playground.data.Coordinate
+import org.ironica.shizuku.playground.tile.Coordinate
 
 @Serializable
 data class GemOrBeeper(
