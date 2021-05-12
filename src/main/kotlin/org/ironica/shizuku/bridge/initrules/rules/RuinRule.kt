@@ -10,5 +10,4 @@ data class RuinRule(
     val loseGem: Int,
     val getGold: Int,
     val loseGold: Int,
-    val awaiting: Int,
 )

@@ -5,8 +5,8 @@ import org.ironica.shizuku.playground.Size
 
 @Serializable
 data class ShopInfo(
-    val weapons: Array<WeaponShopInfo>,
-    val portions: Array<PortionShopInfo>,
+    val weapons: List<WeaponShopInfo>,
+    val portions: List<PortionShopInfo>,
 )
 
 

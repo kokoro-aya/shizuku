@@ -6,9 +6,9 @@ import org.ironica.shizuku.playground.Coordinate
 
 @Serializable
 data class SpecialRules(
-    val specialMessages: Array<SpecialMessage>,
-    val changeBlocks: Array<ChangeBlock>,
-    val changePlatforms: Array<ChangePlatform>,
+    val specialMessages: List<SpecialMessage>,
+    val changeBlocks: List<ChangeBlock>,
+    val changePlatforms: List<ChangePlatform>,
     val randomInitGems: Int,
     val randomInitPortals: Int,
     val randomInitGolds: Int,

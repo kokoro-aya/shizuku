@@ -6,12 +6,12 @@ import org.ironica.shizuku.playground.Size
 
 @Serializable
 data class ItemInfo(
-    val switches: Array<SwitchInfo>,
-    val gems: Array<GemInfo>,
-    val golds: Array<GoldInfo>,
-    val portions: Array<PortionInfo>,
-    val portals: Array<PortalInfo>,
-    val platforms: Array<PlatformInfo>,
+    val switches: List<SwitchInfo>,
+    val gems: List<GemInfo>,
+    val golds: List<GoldInfo>,
+    val portions: List<PortionInfo>,
+    val portals: List<PortalInfo>,
+    val platforms: List<PlatformInfo>,
 )
 
 @Serializable

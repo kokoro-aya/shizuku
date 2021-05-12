@@ -7,5 +7,5 @@ data class LavaRule(
     val canJumpInto: Boolean,
     val dieAfterTurns: Int,
     val coolDown: Int,
-    val willDisappear: Int,
+    val willDisappear: Boolean,
 )

@@ -7,11 +7,11 @@ import org.ironica.shizuku.playground.Size
 
 @Serializable
 data class TileInfo(
-    val shelters: ShelterInfo,
-    val villages: VillageInfo,
-    val stairs: StairInfo,
-    val locks: LockInfo,
-    val monsters: MonsterInfo,
+    val shelters: List<ShelterInfo>,
+    val villages: List<VillageInfo>,
+    val stairs: List<StairInfo>,
+    val locks: List<LockInfo>,
+    val monsters: List<MonsterInfo>,
 )
 
 @Serializable

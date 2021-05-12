@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class StaminaRule(
     val initial: Int,
+    val max: Int,
     val consumePerTurn: Int,
     val inForest: Int,
     val onHill: Int,

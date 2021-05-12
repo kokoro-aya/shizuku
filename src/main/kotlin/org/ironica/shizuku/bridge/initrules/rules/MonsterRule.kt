@@ -4,13 +4,13 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class MonsterRule(
-    val rankUp: Array<Int>,
+    val rankUp: List<Int>,
     val defeatBonus: DefeatBonusRule,
 )
 
 @Serializable
 data class DefeatBonusRule(
-    val gem: Array<Int>,
-    val gold: Array<Int>,
-    val stamina: Array<Int>,
+    val gem: List<Int>,
+    val gold: List<Int>,
+    val stamina: List<Int>,
 )
