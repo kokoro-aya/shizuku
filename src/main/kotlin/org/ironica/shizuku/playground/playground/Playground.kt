@@ -8,6 +8,7 @@ import org.ironica.shizuku.bridge.initrules.rules.*
 import org.ironica.shizuku.playground.Coordinate
 import org.ironica.shizuku.playground.Lock
 import org.ironica.shizuku.playground.Square
+import org.ironica.shizuku.playground.characters.AbstractCharacter
 import org.ironica.shizuku.playground.characters.Player
 import org.ironica.shizuku.playground.items.Portal
 import org.ironica.shizuku.playground.world.AbstractWorld
@@ -16,9 +17,9 @@ class Playground(
     val squares: List<List<Square>>,
     val portals: MutableList<Portal>,
     val locks: MutableMap<Lock, Coordinate>,
-    val players: MutableMap<Player, Coordinate>,
+    val characters: MutableMap<AbstractCharacter, Coordinate>,
 
-    var world: AbstractWorld,
+    var world: MutableList<AbstractWorld>,
 
     val additionalGems: MutableList<AdditionalGem>,
     val additionalGolds: MutableList<AdditionalGold>,
@@ -41,15 +42,15 @@ class Playground(
     val staminaRules: StaminaRule,
 
     val swimRules: SwimRule,
-    val laveRules: LavaRule,
-    val goldRule: GemOrGoldRule,
+    val lavaRules: LavaRule,
+    val goldRules: GemOrGoldRule,
     val gemRules: GemOrGoldRule,
 
     additionalGemOneAfterAnother: Boolean,
     additionalGoldOneAfterAnother: Boolean,
 
     val decreaseEachUsageOfPortal: Int,
-    val dcreaseEachUsageOfLock: Int,
+    val decreaseEachUsageOfLock: Int,
 
     val biomeRules: BiomeRule,
     val seasonRules: SeasonRule,

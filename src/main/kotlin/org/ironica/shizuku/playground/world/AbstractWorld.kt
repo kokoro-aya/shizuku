@@ -11,7 +11,6 @@ import org.ironica.shizuku.playground.items.Portal
 import org.ironica.shizuku.playground.playground.Playground
 
 interface AbstractWorld {
-    var playground: Playground
 
     fun place(player: AbstractCharacter, facing: Direction, atColumn: Int, row: Int): Boolean
     fun place(player: AbstractCharacter, facing: Direction, at: Coordinate): Boolean

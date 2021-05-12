@@ -10,7 +10,9 @@ import org.ironica.shizuku.playground.items.Platform
 import org.ironica.shizuku.playground.items.Portal
 import org.ironica.shizuku.playground.playground.Playground
 
-class World(override var playground: Playground): AbstractWorld {
+class World: AbstractWorld {
+
+    lateinit var playground: Playground
 
     override fun place(player: AbstractCharacter, facing: Direction, atColumn: Int, row: Int): Boolean {
         TODO("Not yet implemented")
