@@ -12,7 +12,7 @@ data class Gold(val value: Int, val disappearIn: Int): Item()
 data class Portion(val size: Size, val disappearIn: Int): Item()
 data class Platform(
     var level: Int,
-    var changes: List<Pair<Int, Int>>? = null,
+    var changes: MutableList<Pair<Int, Int>>? = null,
     val players: MutableList<AbstractCharacter> = mutableListOf(),
 ): Item()
 data class Portal(

@@ -6,7 +6,7 @@ import org.ironica.shizuku.playground.items.*
 
 data class Square(
     var tile: Tile,
-    var blocked: MutableList<Direction>,
+    var blocked: MutableList<Direction> = mutableListOf(),
     var level: Int,
     var color: Color,
     val biome: Biome,
@@ -14,7 +14,8 @@ data class Square(
     var gem: Gem?,
     var gold: Gold?,
     var portal: Portal?,
+    var portion: Portion?,
     var platform: Platform?,
-    val players: MutableList<AbstractCharacter>,
-    var changes: List<Pair<Int, Block>>? = null,
+    val players: MutableList<AbstractCharacter> = mutableListOf(),
+    var changes: MutableList<Pair<Int, Block>>? = null,
 )

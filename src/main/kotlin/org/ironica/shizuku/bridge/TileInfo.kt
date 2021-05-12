@@ -31,7 +31,7 @@ data class StairInfo(
 
 @Serializable
 data class LockInfo(
-    val coo: Coordinate, val controlled: Array<Coordinate>,
+    val coo: Coordinate, val controlled: List<Coordinate>,
 )
 
 @Serializable

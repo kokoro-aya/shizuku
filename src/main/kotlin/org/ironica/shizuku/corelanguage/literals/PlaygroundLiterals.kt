@@ -5,6 +5,7 @@ import org.ironica.shizuku.playground.*
 import org.ironica.shizuku.playground.characters.Player
 import org.ironica.shizuku.playground.characters.Specialist
 import org.ironica.shizuku.playground.items.*
+import org.ironica.shizuku.playground.shop.Weapon
 
 data class PlayerLiteral(
     override val variability: Variability,
@@ -97,5 +98,12 @@ data class MonsterLiteral(
     override val variability: Variability,
     override val prototype: Proto?,
     var content: Monster,
+    var initialized: Boolean = false,
+): Literal
+
+data class WeaponLiteral(
+    override val variability: Variability,
+    override val prototype: Proto?,
+    var content: Weapon,
     var initialized: Boolean = false,
 ): Literal

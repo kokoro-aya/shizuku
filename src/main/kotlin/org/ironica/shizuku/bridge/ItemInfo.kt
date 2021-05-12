@@ -1,6 +1,7 @@
 package org.ironica.shizuku.bridge
 
 import kotlinx.serialization.Serializable
+import org.ironica.shizuku.playground.Color
 import org.ironica.shizuku.playground.Coordinate
 import org.ironica.shizuku.playground.Size
 
@@ -31,12 +32,13 @@ data class GoldInfo(
 
 @Serializable
 data class PortionInfo(
-    val coo: Coordinate, val cat: Size,
+    val coo: Coordinate, val cat: Size, val disappearIn: Int,
 )
 
 @Serializable
 data class PortalInfo(
     val coo: Coordinate, val dest: Coordinate, val isActive: Boolean,
+    val color: Color,
 )
 
 @Serializable

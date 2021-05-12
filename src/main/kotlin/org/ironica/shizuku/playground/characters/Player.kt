@@ -3,11 +3,14 @@ package org.ironica.shizuku.playground.characters
 import org.ironica.shizuku.playground.Color
 import org.ironica.shizuku.playground.Direction
 import org.ironica.shizuku.playground.playground.Playground
+import org.ironica.shizuku.playground.shop.Weapon
 
 class Player(
     override val id: Int,
     override var dir: Direction,
     override var stamina: Int,
+    override var atk: Int,
+    override var weapon: Weapon?
 ): AbstractCharacter {
     lateinit var playground: Playground
 

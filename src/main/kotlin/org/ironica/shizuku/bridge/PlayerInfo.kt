@@ -7,7 +7,6 @@ import org.ironica.shizuku.playground.Role
 @Serializable
 data class PlayerInfo(
     val id: Int,
-    val name: String,
     val x: Int,
     val y: Int,
     val dir: Direction,

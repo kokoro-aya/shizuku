@@ -161,4 +161,7 @@ class YukiManager {
     fun Stair(): StairLiteral
     fun Lock(): LockLiteral
     fun Monster(): MonsterLiteral
+
+    fun Portion(size: Size): PortionLiteral
+    fun Weapon(level: Int): WeaponLiteral
 }

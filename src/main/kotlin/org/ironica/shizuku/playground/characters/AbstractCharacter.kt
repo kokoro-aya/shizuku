@@ -2,12 +2,16 @@ package org.ironica.shizuku.playground.characters
 
 import org.ironica.shizuku.playground.Color
 import org.ironica.shizuku.playground.Direction
+import org.ironica.shizuku.playground.shop.Weapon
 
 interface AbstractCharacter {
 
     val id: Int
     var dir: Direction
     var stamina: Int
+
+    var atk: Int
+    var weapon: Weapon?
 
 
     fun turnLeft(): Boolean
