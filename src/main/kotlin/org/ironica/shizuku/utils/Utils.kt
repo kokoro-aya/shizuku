@@ -1,29 +1,50 @@
 package org.ironica.shizuku.utils
 
-fun <A, B, C, D, E, F, G, H, I, J>zipNine2DArrayToObjArrayWith(
-    first: Array<Array<A>>,
-    second: Array<Array<B>>,
-    third: Array<Array<C>>,
-    forth: Array<Array<D>>,
-    fifth: Array<Array<E>>,
-    sixth: Array<Array<F>>,
-    seventh: Array<Array<G>>,
-    eighth: Array<Array<H>>,
-    ninth: Array<Array<I>>,
-    with: (A, B, C, D, E, F, G, H, I) -> J
-): List<List<J>> {
-    val x = first.size
-    val y = first[0].size
-    assert (second.size == x && third.size == x && forth.size == x && fifth.size == x
-            && sixth.size == x && seventh.size == x && eighth.size == x && ninth.size == x
-            && second[0].size == y && third[0].size == y && forth[0].size == y && fifth[0].size == y
-            && sixth[0].size == y && seventh[0].size == y && eighth[0].size == y && ninth[0].size == y
-    ) { "nine arrays should have same dimensions" }
-    return first.mapIndexed { i1, p ->
-        p.mapIndexed { i2, a ->
-            with(a, second[i1][i2], third[i1][i2], forth[i1][i2], fifth[i1][i2],
-                sixth[i1][i2], seventh[i1][i2], eighth[i1][i2], ninth[i1][i2]
-                )
-        }
+import org.ironica.shizuku.bridge.*
+import org.ironica.shizuku.bridge.initrules.rules.MonsterRule
+import org.ironica.shizuku.bridge.initrules.rules.PortalOrLockRule
+import org.ironica.shizuku.bridge.initrules.rules.Rules
+import org.ironica.shizuku.playground.*
+
+fun convertSingleBlockToTile(block: Block, i: Int, j: Int, tileInfo: TileInfo?, lockRules: PortalOrLockRule?, monsterRules: MonsterRule?): Tile = when (block) {
+    Block.NONE -> None
+    Block.OPEN -> Open
+    Block.HILL -> Hill
+    Block.STONE -> Stone
+    Block.TREE -> Tree
+    Block.WATER -> Water
+    Block.LAVA -> Lava(0)
+    Block.RUIN -> Ruin
+    Block.SHELTER, Block.VILLAGE, Block.STAIR,
+    Block.LOCK, Block.MONSTER ->
+        if
+            (tileInfo != null && lockRules != null && monsterRules != null) setASpecialTile(j, i, tileInfo, lockRules, monsterRules)
+        else
+            throw Exception()
+}
+
+private fun setASpecialTile(x: Int, y: Int, tiles: TileInfo, lockRules: PortalOrLockRule, monsterRules: MonsterRule): Tile {
+    val coo = Coordinate(x, y)
+    return with (tiles.locks.firstOrNull { it.coo == coo }
+        ?: tiles.monsters.firstOrNull { it.coo == coo }
+        ?: tiles.shelters.firstOrNull { it.coo == coo }
+        ?: tiles.stairs.firstOrNull { it.coo == coo }
+        ?: tiles.villages.firstOrNull { it.coo == coo } ?: throw Exception()) {
+        setTileSub(this, lockRules, monsterRules)
+    }
+}
+
+private fun setTileSub(tile: Any, lockRules: PortalOrLockRule, monsterRules: MonsterRule): Tile {
+    return when (tile) {
+        is ShelterInfo -> Shelter(tile.cap)
+        is VillageInfo -> Village(tile.size)
+        is StairInfo -> Stair(tile.dir)
+        is LockInfo -> Lock(tile.controlled.toMutableList(), lockRules.defaultEnergy)
+        is MonsterInfo -> Monster(tile.stamina, tile.atk, tile.level,
+            monsterRules.defeatBonus.stamina[0],
+            monsterRules.defeatBonus.gem[0],
+            monsterRules.defeatBonus.gold[0]
+        )
+        else -> throw Exception()
     }
 }

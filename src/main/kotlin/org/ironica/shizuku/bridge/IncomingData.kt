@@ -40,7 +40,7 @@ data class IncomingData(
         winCondition = WinConditionRule(
             hasGemMoreThan = 0, hasGoldMoreThanCollected = 0, hasGoldMoreThanSpent = 0,
             noGemLeftOnGround = true, noGoldLeftOnGround = true,
-            allSwitches = AllSwitchesCondition(on = true),
+            allSwitches = 2,
             afterTurns = 1000,
             monsters = MonstersCondition(true, 0),
             satisfiedConditions = 2,

@@ -14,62 +14,38 @@ class Specialist(
 ): AbstractCharacter {
     lateinit var playground: Playground
 
-    var collectedGems = 0
-    var collectedGolds = 0
-    var goldsInBag = 0
+    override var collectedGems = 0
+    override var collectedGolds = 0
+    override var goldsInBag = 0
 
-    var inWaterForTurns: Int = 0
-    var inLavaForTurns: Int = 0
+    override var inWaterForTurns: Int = 0
+    override var inLavaForTurns: Int = 0
 
     var extendCount: Int = 0
 
-    override fun turnLeft(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun turnLeft(): Boolean = playground.characterTurnLeft(this)
 
-    override fun turnRight(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun turnRight(): Boolean = playground.characterTurnRight(this)
 
-    override fun moveForward(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun moveForward(): Boolean = playground.characterMoveForward(this)
 
-    override fun collectGem(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun collectGem(): Boolean = playground.characterCollectGem(this)
 
-    override fun toggleSwitch(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun toggleSwitch(): Boolean = playground.characterToggleSwitch(this)
 
-    override fun takeBeeper(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun takeGold(): Boolean = playground.characterTakeGold(this)
 
-    override fun dropBeeper(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun dropGold(value: Int): Boolean = playground.characterDropGold(this, value)
 
-    override fun stepIntoPortal(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun stepIntoPortal(): Boolean = playground.characterStepIntoPortal(this)
 
-    override fun jump(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun jump(): Boolean = playground.characterJump(this)
 
-    override fun changeColor(color: Color): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun changeColor(color: Color): Boolean = playground.characterChangeColor(this, color)
 
-    override fun kill(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun kill(): Boolean = playground.characterKill(this)
 
-    override fun fightAgainstMonster(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun fightAgainstMonster(): Boolean = playground.characterFightAgainstMonster(this)
 
     override fun dance1(): Boolean {
         TODO("Not yet implemented")
@@ -91,68 +67,73 @@ class Specialist(
         TODO("Not yet implemented")
     }
 
-    override fun setUpShelter(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun setUpShelter(): Boolean = playground.CharacterSetUpShelter(this)
+
+    fun turnLockUp(): Boolean = playground.specialistTurnLockUp(this)
+
+    fun turnLockDown(): Boolean = playground.specialistTurnLockDown(this)
+
+    val isBeforeLock: Boolean
+        get() = playground.specialistIsBeforeLock(this)
 
     override val isOnGem: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsOnGem(this)
     override val isOnOpenedSwitch: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsOnOpenedSwitch(this)
     override val isOnClosedSwitch: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsOnClosedSwitch(this)
     override val isOnGold: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsOnGold(this)
     override val isOnPortion: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsOnPortion(this)
     override val isInVillage: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsInVillage(this)
     override val isInShelter: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsInShelter(this)
     override val isOnHill: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsOnHill(this)
     override val isInForest: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsInForest(this)
     override val isInWater: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsInWater(this)
     override val isInLava: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsInLava(this)
     override val isInRuin: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsInRuin(this)
     override val isAgainstMonster: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsAgainstMonster(this)
     override val isInSnowy: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsInSnowy(this)
     override val isInCold: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsInCold(this)
     override val isInValley: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsInValley(this)
     override val isInPlains: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsInPlains(this)
     override val isInSwamp: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsInSwamp(this)
     override val isInDesert: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsInDesert(this)
     override val isInBadland: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsInBadland(this)
     override val isOnPlatform: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsOnPlatform(this)
     override val isOnPortal: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsOnPortal(this)
     override val isBlocked: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsBlocked(this)
     override val isBlockedLeft: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsBlockedLeft(this)
     override val isBlockedRight: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsBlockedRight(this)
     override val collectedGem: Int
-        get() = TODO("Not yet implemented")
+        get() = this.collectedGems
     override val goldInBag: Int
-        get() = TODO("Not yet implemented")
+        get() = this.goldsInBag
     override val isAlive: Boolean
-        get() = TODO("Not yet implemented")
+        get() = stamina > 0
     override val isDead: Boolean
-        get() = TODO("Not yet implemented")
+        get() = !isAlive
     override val isInWinter: Boolean
-        get() = TODO("Not yet implemented")
+        get() = playground.characterIsInWinter(this)
 }

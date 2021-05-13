@@ -13,14 +13,21 @@ interface AbstractCharacter {
     var atk: Int
     var weapon: Weapon?
 
+    var collectedGems: Int
+    var collectedGolds: Int
+    var goldsInBag: Int
+
+    var inWaterForTurns: Int
+    var inLavaForTurns: Int
+
 
     fun turnLeft(): Boolean
     fun turnRight(): Boolean
     fun moveForward(): Boolean
     fun collectGem(): Boolean
     fun toggleSwitch(): Boolean
-    fun takeBeeper(): Boolean
-    fun dropBeeper(): Boolean
+    fun takeGold(): Boolean
+    fun dropGold(value: Int): Boolean
 
     fun stepIntoPortal(): Boolean
 

@@ -10,6 +10,8 @@ import org.ironica.shizuku.bridge.initrules.SpecialRules
 import org.ironica.shizuku.bridge.initrules.disabled.DisabledFeature
 import org.ironica.shizuku.bridge.initrules.preinitialized.PreInitializedObject
 import org.ironica.shizuku.bridge.initrules.rules.Rules
+import org.ironica.shizuku.corelanguage.YukiVisitorImpl
+import org.ironica.shizuku.manager.YukiManager
 import org.ironica.shizuku.playground.*
 import org.ironica.shizuku.playground.characters.AbstractCharacter
 import org.ironica.shizuku.playground.characters.Player
@@ -18,6 +20,7 @@ import org.ironica.shizuku.playground.items.*
 import org.ironica.shizuku.playground.playground.Playground
 import org.ironica.shizuku.playground.shop.Weapon
 import org.ironica.shizuku.playground.world.World
+import org.ironica.shizuku.utils.convertSingleBlockToTile
 import yukiLexer
 import yukiParser
 import java.util.*
@@ -36,10 +39,10 @@ class YukiBridge(
     biomes: List<List<Biome>>,
 
     private val portals: MutableList<Portal> = mutableListOf(),
-    private val locks: MutableMap<Lock, Coordinate> = mutableMapOf(),
+    private val locks: MutableMap<Coordinate, Lock> = mutableMapOf(),
     private val players: List<PlayerInfo>,
 
-    private val disabledFeature: List<DisabledFeature>,
+    private val disabledFeatures: List<DisabledFeature>,
     private val preInitialized: List<PreInitializedObject>,
 
     private val rules: Rules,
@@ -62,11 +65,11 @@ class YukiBridge(
         squares.forEachIndexed { i, line ->
             line.forEachIndexed { j, loc ->
                 loc.portal?.let { portals.add(it) }
-                if (loc.tile is Lock) locks[loc.tile as Lock] = Coordinate(j, i)
+                if (loc.tile is Lock) locks[Coordinate(j, i)] = loc.tile as Lock
             }
         }
         val allPlatforms = allCoordinatesOfPlatforms(squares)
-        if (locks.map { checkAllControlledByLockAsPlatform(it.key, allPlatforms) }.any { !it })
+        if (locks.values.map { checkAllControlledByLockAsPlatform(it, allPlatforms) }.any { !it })
             throw Exception()
     }
 
@@ -123,6 +126,13 @@ class YukiBridge(
             "two_dim" -> GameMode.TWO_DIM
             else -> throw Exception()
         }
+        val manager = YukiManager(
+            gameMode = gameMode,
+            playground = playground,
+        )
+        manager.appendEntry()
+        val exec = YukiVisitorImpl(manager, disabledFeatures, preInitialized)
+        exec.visit(tree)
     }
 
     private fun convertPlayerListToCharacterMap(players: List<PlayerInfo>, weapons: List<Weapon>): MutableMap<AbstractCharacter, Coordinate> {
@@ -148,45 +158,8 @@ class YukiBridge(
     ): List<List<Tile>> {
         return grid.mapIndexed { i, line ->
             line.mapIndexed { j, it ->
-                when (it) {
-                    Block.NONE -> None
-                    Block.OPEN -> Open
-                    Block.HILL -> Hill
-                    Block.STONE -> Stone
-                    Block.TREE -> Tree
-                    Block.WATER -> Water
-                    Block.LAVA -> Lava(0)
-                    Block.RUIN -> Ruin
-                    Block.SHELTER, Block.VILLAGE, Block.STAIR,
-                    Block.LOCK, Block.MONSTER -> setASpecialTile(j, i, tileInfo)
-                }
+                convertSingleBlockToTile(it, i, j, tileInfo, rules.lockRules, rules.monsterRules)
             }
-        }
-    }
-
-    private fun setASpecialTile(x: Int, y: Int, tiles: TileInfo): Tile {
-        val coo = Coordinate(x, y)
-        return with (tiles.locks.firstOrNull { it.coo == coo }
-            ?: tiles.monsters.firstOrNull { it.coo == coo }
-            ?: tiles.shelters.firstOrNull { it.coo == coo }
-            ?: tiles.stairs.firstOrNull { it.coo == coo }
-            ?: tiles.villages.firstOrNull { it.coo == coo } ?: throw Exception()) {
-            setTileSub(this)
-        }
-    }
-
-    private fun setTileSub(tile: Any): Tile {
-        return when (tile) {
-            is ShelterInfo -> Shelter(tile.cap)
-            is VillageInfo -> Village(tile.size)
-            is StairInfo -> Stair(tile.dir)
-            is LockInfo -> Lock(tile.controlled.toMutableList(), rules.lockRules.defaultEnergy)
-            is MonsterInfo -> Monster(tile.stamina, tile.atk, tile.level,
-                rules.monsterRules.defeatBonus.stamina[0],
-                rules.monsterRules.defeatBonus.gem[0],
-                rules.monsterRules.defeatBonus.gold[0]
-                )
-            else -> throw Exception()
         }
     }
 

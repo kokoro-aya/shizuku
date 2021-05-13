@@ -11,10 +11,9 @@ import org.ironica.shizuku.playground.message.GameStatus
 import org.ironica.shizuku.playground.playground.Playground
 import org.ironica.shizuku.playground.world.AbstractWorld
 
-class YukiManager {
-    val playground: Playground
-    var consoleLog: String
-    var special: String
+class YukiManager(val gameMode: GameMode, val playground: Playground) {
+    var consoleLog: String = ""
+    var special: String = ""
 
     val defaultCharacter: AbstractCharacter?
 
