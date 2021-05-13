@@ -1,16 +1,18 @@
 package org.ironica.shizuku.playground.characters
 
+import org.ironica.shizuku.corelanguage.literals.PortionItemLiteral
+import org.ironica.shizuku.corelanguage.literals.WeaponItemLiteral
 import org.ironica.shizuku.playground.Color
 import org.ironica.shizuku.playground.Direction
 import org.ironica.shizuku.playground.playground.Playground
-import org.ironica.shizuku.playground.shop.Weapon
+import org.ironica.shizuku.playground.shop.WeaponItem
 
 class Specialist(
     override val id: Int,
     override var dir: Direction,
     override var stamina: Int,
     override var atk: Int,
-    override var weapon: Weapon?,
+    override var weaponItem: WeaponItem?,
 ): AbstractCharacter {
     lateinit var playground: Playground
 
@@ -20,6 +22,8 @@ class Specialist(
 
     override var inWaterForTurns: Int = 0
     override var inLavaForTurns: Int = 0
+
+    override var hasJustSteppedIntoPortal: Boolean = false
 
     var extendCount: Int = 0
 
@@ -46,6 +50,14 @@ class Specialist(
     override fun kill(): Boolean = playground.characterKill(this)
 
     override fun fightAgainstMonster(): Boolean = playground.characterFightAgainstMonster(this)
+
+    override fun buy(portion: PortionItemLiteral): Boolean {
+        return playground.characterBuyPortion(this, portion.size)
+    }
+
+    override fun buy(weapon: WeaponItemLiteral): Boolean {
+        return playground.characterBuyWeapon(this, weapon.id)
+    }
 
     override fun dance1(): Boolean {
         TODO("Not yet implemented")

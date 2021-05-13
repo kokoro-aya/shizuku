@@ -36,6 +36,6 @@ data class LockInfo(
 
 @Serializable
 data class MonsterInfo(
-    val coo: Coordinate, val stamina: Int, val atk: Int, val level: Int,
+    val coo: Coordinate, val stamina: Int, val atk: Int, val level: Int = 0,
 )
 

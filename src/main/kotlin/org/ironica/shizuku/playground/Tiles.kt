@@ -41,7 +41,7 @@ data class Village(val size: Size): Tile()
 data class Stair(val dir: Direction): Tile()
 data class Lock(val controlled: MutableList<Coordinate>, var energy: Int): Tile()
 data class Monster(
-    var stamina: Int, val atk: Int, var rank: Int,
+    var stamina: Int, var atk: Int, var rank: Int,
     var defeatGetStamina: Int,
     var defeatGetGem: Int,
     var defeatGetGold: Int,

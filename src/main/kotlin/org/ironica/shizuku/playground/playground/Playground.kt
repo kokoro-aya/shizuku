@@ -10,10 +10,10 @@ import org.ironica.shizuku.playground.*
 import org.ironica.shizuku.playground.characters.AbstractCharacter
 import org.ironica.shizuku.playground.characters.Player
 import org.ironica.shizuku.playground.characters.Specialist
-import org.ironica.shizuku.playground.items.Gem
-import org.ironica.shizuku.playground.items.Gold
-import org.ironica.shizuku.playground.items.Portal
+import org.ironica.shizuku.playground.items.*
 import org.ironica.shizuku.playground.message.GameStatus
+import org.ironica.shizuku.playground.shop.PortionItem
+import org.ironica.shizuku.playground.shop.WeaponItem
 import org.ironica.shizuku.playground.world.AbstractWorld
 import org.ironica.shizuku.playground.world.World
 import org.ironica.shizuku.utils.convertSingleBlockToTile
@@ -36,7 +36,9 @@ class Playground(
     randomInitPortals: Int,
 
     val specialMessages: List<SpecialMessage>,
-    val shopItems: ShopInfo,
+
+    val weaponsInShop: MutableList<WeaponItem>,
+    val portionsInShop: MutableList<PortionItem>,
 
     val userCollision: Boolean,
     val maxTerrainHeight: Int,
@@ -112,6 +114,8 @@ class Playground(
             is Player -> k.playground = this
             is Specialist -> k.playground = this
         } }
+
+        assert (squares.flatten().filter { it.tile is Shelter }.size <= seasonRules.shelter.maxCount)
 
         val w = World()
         w.playground = this
@@ -194,7 +198,7 @@ class Playground(
         return when (tile) {
             is Lava -> lavaRules.canJumpInto
             Water -> swimRules.canSwim
-            is Lock, None, Stone -> false
+            is Lock, None, Stone, -> false
             else -> true
         }
     }
@@ -204,20 +208,84 @@ class Playground(
         val fromSq = squares[from.y][from.x]
         val toSq = squares[to.y][to.x]
         if (!isTileAccessible(toSq.tile)) return true
-        if (userCollision) return toSq.players.isNotEmpty()
+        if (userCollision && toSq.players.isNotEmpty()) return true
         return (toSq.level - fromSq.level).let {
                 it < -1 || it > 1 || (it == 1 && !hasStairToward(from, to))
                         || (it == -1 && !hasStairToward(to, from))
         }
     }
 
+    private fun findAPath(from: Coordinate, to: Coordinate): Pair<PlayerReceiver?, PlayerReceiver?> {
+        assert (isAdjacent(from, to))
+        if (!isMoveBlocked(from, to)) return PlayerReceiver.TILE to PlayerReceiver.TILE
+        if (!isMoveFromPlatformToPlatformBlocked(from, to)) return PlayerReceiver.PLATFORM to PlayerReceiver.PLATFORM
+        if (!isMoveFromPlatformBlocked(from, to)) return PlayerReceiver.PLATFORM to PlayerReceiver.TILE
+        if (!isMoveToPlatformBlocked(from, to)) return PlayerReceiver.TILE to PlayerReceiver.PLATFORM
+        return null to null
+    }
+
+    private fun isMoveFromPlatformToPlatformBlocked(from: Coordinate, to: Coordinate): Boolean {
+        assert (isAdjacent(from, to))
+        val f = from.toSquare().platform; val t = to.toSquare().platform
+        assert (f != null && t != null)
+        if (userCollision && t!!.players.isNotEmpty()) return true
+        return (t?.level != f?.level)
+    }
+
+    private fun isMoveFromPlatformBlocked(from: Coordinate, to: Coordinate): Boolean {
+        assert (isAdjacent(from, to))
+        val f = from.toSquare().platform; val t = to.toSquare()
+        assert (f != null)
+        if (userCollision && t.players.isNotEmpty()) return true
+        return (t.level == f?.level)
+    }
+
+    private fun isMoveToPlatformBlocked(from: Coordinate, to: Coordinate): Boolean {
+        assert (isAdjacent(from, to))
+        val f = from.toSquare(); val t = to.toSquare().platform
+        assert (t != null)
+        if (userCollision && t!!.players.isNotEmpty()) return true
+        return (t?.level == f.level)
+    }
+
+    private fun findAPathToJump(from: Coordinate, to: Coordinate): Pair<PlayerReceiver?, PlayerReceiver?> {
+        assert (isAdjacent(from, to))
+        if (!isJumpFromPlatformToPlatformBlocked(from, to)) return PlayerReceiver.PLATFORM to PlayerReceiver.PLATFORM
+        if (!isJumpToPlatformBlocked(from, to)) return PlayerReceiver.TILE to PlayerReceiver.PLATFORM
+        if (!isJumpFromPlatformBlocked(from, to)) return PlayerReceiver.PLATFORM to PlayerReceiver.TILE
+        if (!isJumpBlocked(from, to)) return PlayerReceiver.TILE to PlayerReceiver.TILE
+        return null to null
+    }
+
     private fun isJumpBlocked(from: Coordinate, to: Coordinate): Boolean {
         assert (isAdjacent(from, to))
-        val fromSq = squares[from.y][from.x]
-        val toSq = squares[to.y][to.x]
+        val fromSq = from.toSquare()
+        val toSq = to.toSquare()
         if (!isTileAccessible(toSq.tile)) return true
-        if (userCollision) return toSq.players.isNotEmpty()
+        if (userCollision && toSq.players.isNotEmpty()) return true
         return (toSq.level - fromSq.level).let { it < -1 || it > 1 }
+    }
+
+    private fun isJumpFromPlatformToPlatformBlocked(from: Coordinate, to: Coordinate): Boolean {
+        assert (isAdjacent(from, to))
+        val f = from.toSquare().platform; val t = to.toSquare().platform
+        assert (f != null && t != null)
+        if (userCollision && t!!.players.isNotEmpty()) return true
+        return (t!!.level - f!!.level).let { it < -1 || it > 1 }
+    }
+    private fun isJumpToPlatformBlocked(from: Coordinate, to: Coordinate): Boolean {
+        assert (isAdjacent(from, to))
+        val f = from.toSquare(); val t = to.toSquare().platform
+        assert (t != null)
+        if (userCollision && t!!.players.isNotEmpty()) return true
+        return (t!!.level - f.level).let { it < -1 || it > 1 }
+    }
+    private fun isJumpFromPlatformBlocked(from: Coordinate, to: Coordinate): Boolean {
+        assert (isAdjacent(from, to))
+        val f = from.toSquare().platform; val t = to.toSquare()
+        assert (f != null)
+        if (userCollision && t.players.isNotEmpty()) return true
+        return (t.level - f!!.level).let { it < -1 || it > 1 }
     }
 
     private fun isAdjacent(from: Coordinate, to: Coordinate): Boolean {
@@ -238,31 +306,35 @@ class Playground(
         return false
     }
 
-    private fun isBlockedYPlus(char: AbstractCharacter): Boolean {
+    private fun findPathTowardYPlus(char: AbstractCharacter, jump: Boolean): Pair<PlayerReceiver?, PlayerReceiver?> {
         val (x, y) = getCooFor(char).toPairXY()
-        if (y == 0) return true
-        return isMoveBlocked(Coordinate(x, y), Coordinate(x, y - 1))
+        if (y == 0 || (squares[y][x].tile is Monster && squares[y][x].players.contains(char))) return null to null
+        return if (jump) findAPathToJump(Coordinate(x, y), Coordinate(x, y - 1))
+            else findAPath(Coordinate(x, y), Coordinate(x, y - 1))
     }
-    private fun isBlockedYMinus(char: AbstractCharacter): Boolean {
+    private fun findPathTowardYMinus(char: AbstractCharacter, jump: Boolean): Pair<PlayerReceiver?, PlayerReceiver?> {
         val (x, y) = getCooFor(char).toPairXY()
-        if (y == squares.size - 1) return true
-        return isMoveBlocked(Coordinate(x, y), Coordinate(x, y + 1))
+        if (y == squares.size - 1 || (squares[y][x].tile is Monster && squares[y][x].players.contains(char))) return null to null
+        return if (jump) findAPathToJump(Coordinate(x, y), Coordinate(x, y + 1))
+            else findAPath(Coordinate(x, y), Coordinate(x, y + 1))
     }
-    private fun isBlockedXMinus(char: AbstractCharacter): Boolean {
+    private fun findPathTowardXMinus(char: AbstractCharacter, jump: Boolean): Pair<PlayerReceiver?, PlayerReceiver?> {
         val (x, y) = getCooFor(char).toPairXY()
-        if (x == 0) return true
-        return isMoveBlocked(Coordinate(x, y), Coordinate(x - 1, y))
+        if (x == 0 || (squares[y][x].tile is Monster && squares[y][x].players.contains(char))) return null to null
+        return if (jump) findAPathToJump(Coordinate(x, y), Coordinate(x - 1, y))
+            else findAPath(Coordinate(x, y), Coordinate(x - 1, y))
     }
-    private fun isBlockedXPlus(char: AbstractCharacter): Boolean {
+    private fun findPathTowardXPlus(char: AbstractCharacter, jump: Boolean): Pair<PlayerReceiver?, PlayerReceiver?> {
         val (x, y) = getCooFor(char).toPairXY()
-        if (x == squares[0].size - 1) return true
-        return isMoveBlocked(Coordinate(x, y), Coordinate(x + 1, y))
+        if (x == squares[0].size - 1 || (squares[y][x].tile is Monster && squares[y][x].players.contains(char))) return null to null
+        return if (jump) findAPathToJump(Coordinate(x, y), Coordinate(x + 1, y))
+            else findAPath(Coordinate(x, y), Coordinate(x + 1, y))
     }
 
     private fun getAmplitudeForCharacter(char: AbstractCharacter): Double {
         val (x, y) = getCooFor(char).toPairXY()
         squares[y][x].let {
-            if (it.tile is Shelter) return 0.5
+            if (it.tile is Shelter) return seasonRules.shelter.coef
             if (it.tile is Village) return 0.0
             return when (season) {
                 Season.SUMMER -> when (it.biome) {
@@ -313,25 +385,46 @@ class Playground(
         return true
     }
 
-    private fun movePlayerUp(char: AbstractCharacter) {
-        val (x, y) = getCooFor(char).toPairXY()
-        squares[y][x].players.remove(char)
-        squares[y - 1][x].players.add(char)
+    private fun move(char: AbstractCharacter, from: Square, to: Square, path: Pair<PlayerReceiver?, PlayerReceiver?>) {
+        when (path.first!!) {
+            PlayerReceiver.TILE -> when (path.second!!) {
+                PlayerReceiver.TILE -> {
+                    from.players.remove(char); to.players.add(char)
+                }
+                PlayerReceiver.PLATFORM -> {
+                    from.players.remove(char); to.platform?.players?.add(char)
+                }
+            }
+            PlayerReceiver.PLATFORM -> when (path.second!!) {
+                PlayerReceiver.TILE -> {
+                    from.platform?.players?.remove(char); to.players.add(char)
+                }
+                PlayerReceiver.PLATFORM -> {
+                    from.platform?.players?.remove(char); to.platform?.players?.remove(char)
+                }
+            }
+        }
     }
-    private fun movePlayerDown(char: AbstractCharacter) {
+
+    private fun movePlayerUp(char: AbstractCharacter, path: Pair<PlayerReceiver?, PlayerReceiver?>) {
         val (x, y) = getCooFor(char).toPairXY()
-        squares[y][x].players.remove(char)
-        squares[y + 1][x].players.add(char)
+        val f = squares[y][x]; val t = squares[y - 1][x]
+        move(char, f, t, path)
     }
-    private fun movePlayerLeft(char: AbstractCharacter) {
+    private fun movePlayerDown(char: AbstractCharacter, path: Pair<PlayerReceiver?, PlayerReceiver?>) {
         val (x, y) = getCooFor(char).toPairXY()
-        squares[y][x].players.remove(char)
-        squares[y][x - 1].players.add(char)
+        val f = squares[y][x]; val t = squares[y + 1][x]
+        move(char, f, t, path)
     }
-    private fun movePlayerRight(char: AbstractCharacter) {
+    private fun movePlayerLeft(char: AbstractCharacter, path: Pair<PlayerReceiver?, PlayerReceiver?>) {
         val (x, y) = getCooFor(char).toPairXY()
-        squares[y][x].players.remove(char)
-        squares[y][x + 1].players.add(char)
+        val f = squares[y][x]; val t = squares[y][x - 1]
+        move(char, f, t, path)
+    }
+    private fun movePlayerRight(char: AbstractCharacter, path: Pair<PlayerReceiver?, PlayerReceiver?>) {
+        val (x, y) = getCooFor(char).toPairXY()
+        val f = squares[y][x]; val t = squares[y][x + 1]
+        move(char, f, t, path)
     }
 
     private fun incrementATurn() {
@@ -352,7 +445,11 @@ class Playground(
             if (characterIsInRuin(it)) it.stamina += (staminaRules.inRuin * amp).roundToInt()
             if (characterIsAgainstMonster(it)) it.stamina += (staminaRules.againstMonster * amp).roundToInt()
             if (characterIsInShelter(it)) it.stamina += (staminaRules.inShelter * amp).roundToInt()
-            if (characterIsInVillage(it)) it.stamina += (staminaRules.inVillage * amp).roundToInt()
+            if (characterIsInVillage(it)) it.stamina += (staminaRules.inVillage * amp * when ((getCooFor(it).toSquare().tile as Village).size) {
+                Size.SMALL -> villageRules.smallCoef
+                Size.MEDIUM -> villageRules.mediumCoef
+                Size.LARGE -> villageRules.largeCoef
+            }).roundToInt()
             if (characterIsInWater(it)) {
                 it.stamina += (staminaRules.inWater.perTurn * amp).roundToInt()
                 it.inWaterForTurns += 1
@@ -369,13 +466,38 @@ class Playground(
         // DieCondition (swim, lava, stamina)
         allChars.filter { it.stamina <= 0 }.forEach { killACharacter(it) }
 
-        // Lava Disappear
         squares.forEachIndexed  { i, line -> line.forEachIndexed { j, it ->
             with (it.tile) {
+                // Lava Disappear
                 if (this is Lava) {
                     this.lastingFor += 1
                     if (this.lastingFor >= lavaRules.coolDown) {
                         it.tile = if (lavaRules.willDisappear) Open else Stone
+                    }
+                }
+                // Step into ruins
+                if (this is Ruin && it.players.isNotEmpty()) {
+                    it.players.forEach {
+                        val rnd = Random.nextInt(0, 6) // because we have 6 rules for ruins
+                        if (rnd == 0) it.stamina += Random.nextInt(ruinRules.gainStamina)
+                        if (rnd == 1) it.stamina -= Random.nextInt(ruinRules.loseStamina)
+                        if (rnd == 2) it.collectedGems += Random.nextInt(ruinRules.getGem)
+                        if (rnd == 3) it.collectedGems -= Random.nextInt(ruinRules.loseGem)
+                        if (rnd == 4) it.collectedGolds += Random.nextInt(ruinRules.getGold)
+                        if (rnd == 5) it.collectedGolds -= Random.nextInt(ruinRules.loseGold)
+                    }
+                }
+                // Counter attacked by monsters
+                if (this is Monster) {
+                    if (monsterRules.rankUp.contains(currentTurns)) {
+                        this.rank = monsterRules.rankUp.indexOf(currentTurns)
+                        this.atk += monsterRules.atk[this.rank]
+                        this.stamina += monsterRules.stamina[this.rank]
+                    }
+                    if (it.players.isNotEmpty()) {
+                        it.players.forEach {
+                            it.stamina -= this.atk
+                        }
                     }
                 }
             }
@@ -495,25 +617,39 @@ class Playground(
         if (char.inWaterForTurns > 0 && !characterIsInWater(char)) char.inWaterForTurns = 0
     }
 
-    fun characterMoveForward(char: AbstractCharacter): Boolean {
-        val oldTile = getCooFor(char).toSquare()
-        if (!characterIsBlocked(char)) {
-            when (char.dir) {
-                Direction.UP -> movePlayerUp(char)
-                Direction.DOWN -> movePlayerDown(char)
-                Direction.LEFT -> movePlayerLeft(char)
-                Direction.RIGHT -> movePlayerRight(char)
-            }
+    private fun getPathForward(char: AbstractCharacter): Pair<PlayerReceiver?, PlayerReceiver?> {
+        return when (char.dir) {
+            Direction.UP -> findPathTowardYPlus(char, false)
+            Direction.DOWN -> findPathTowardYMinus(char, false)
+            Direction.LEFT -> findPathTowardXMinus(char, false)
+            Direction.RIGHT -> findPathTowardXPlus(char, false)
         }
-        val newTile = getCooFor(char).toSquare()
-        afterPlayerMakesAMove(char, oldTile.tile, newTile.tile)
-        val amp = getAmplitudeForCharacter(char)
-        char.stamina += (staminaRules.moveForward * amp).roundToInt()
-        incrementATurn()
-        return true
+    }
+
+    fun characterMoveForward(char: AbstractCharacter): Boolean {
+        if (char.isDead) return false
+        val oldTile = getCooFor(char).toSquare()
+        val path = getPathForward(char)
+        if (path != null to null) {
+            when (char.dir) {
+                Direction.UP -> movePlayerUp(char, path)
+                Direction.DOWN -> movePlayerDown(char, path)
+                Direction.LEFT -> movePlayerLeft(char, path)
+                Direction.RIGHT -> movePlayerRight(char, path)
+            }
+            val newTile = getCooFor(char).toSquare()
+            afterPlayerMakesAMove(char, oldTile.tile, newTile.tile)
+            val amp = getAmplitudeForCharacter(char)
+            char.stamina += (staminaRules.moveForward * amp).roundToInt()
+            char.hasJustSteppedIntoPortal = false
+            incrementATurn()
+            return true
+        }
+        return false
     }
 
     fun characterCollectGem(char: AbstractCharacter): Boolean {
+        if (char.isDead) return false
         return if (characterIsOnGem(char)) {
             char.collectedGems += 1
             with (characters[char]!!) {
@@ -537,6 +673,7 @@ class Playground(
     }
 
     fun characterToggleSwitch(char: AbstractCharacter): Boolean {
+        if (char.isDead) return false
         return when {
             characterIsOnOpenedSwitch(char) -> {
                 with (characters[char]!!) {
@@ -568,6 +705,7 @@ class Playground(
     }
 
     fun characterTakeGold(char: AbstractCharacter): Boolean {
+        if (char.isDead) return false
         return if (characterIsOnGold(char)) {
             with (characters[char]!!) {
                 val golds = this.toSquare().gold!!.value
@@ -586,6 +724,7 @@ class Playground(
     }
 
     fun characterDropGold(char: AbstractCharacter, value: Int): Boolean {
+        if (char.isDead) return false
         if (value > char.goldsInBag) return false
         with (characters[char]!!.toSquare()) {
             return if (this.gold == null) {
@@ -617,6 +756,7 @@ class Playground(
     }
 
     fun characterKill(char: AbstractCharacter): Boolean {
+        if (char.isDead) return false
         return if (characters.contains(char)) {
             killACharacter(char)
             incrementATurn()
@@ -628,10 +768,34 @@ class Playground(
     }
 
     fun characterFightAgainstMonster(char: AbstractCharacter): Boolean {
-
+        if (char.isDead) return false
+        with (getCooFor(char).toSquare()) {
+            if (this.tile !is Monster) {
+                incrementATurn()
+                return false
+            } else {
+                val mo = this.tile as Monster
+                while (mo.stamina > 0 && char.stamina > 0) {
+                    mo.stamina -= char.atk + (char.weaponItem?.atk ?: 0)
+                    char.stamina -= mo.atk
+                }
+                return if (mo.stamina <= 0) {
+                    this.tile = Open
+                    char.collectedGems += monsterRules.defeatBonus.gem[mo.rank]
+                    char.collectedGolds += monsterRules.defeatBonus.gold[mo.rank]
+                    char.stamina += monsterRules.defeatBonus.stamina[mo.rank]
+                    incrementATurn()
+                    true
+                } else {
+                    incrementATurn()
+                    false
+                }
+            }
+        }
     }
 
     fun CharacterSetUpShelter(char: AbstractCharacter): Boolean {
+        if (char.isDead) return false
         with (getCooFor(char).toSquare()) {
             if (this.tile !is Open || shelterCount >= seasonRules.shelter.maxCount) {
                 incrementATurn()
@@ -639,6 +803,7 @@ class Playground(
             } else {
                 val sh = Shelter(seasonRules.shelter.maxPlayersPerShelter)
                 sh.joinAPlayer(char)
+                shelterCount += 1
                 incrementATurn()
                 true
             }
@@ -648,125 +813,128 @@ class Playground(
     }
 
     fun characterIsOnGem(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().gem != null
+        return char.isAlive && getCooFor(char).toSquare().gem != null
     }
 
     fun characterIsOnOpenedSwitch(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().switch?.on == true
+        return char.isAlive && getCooFor(char).toSquare().switch?.on == true
     }
 
     fun characterIsOnClosedSwitch(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().switch?.on == false
+        return char.isAlive && getCooFor(char).toSquare().switch?.on == false
     }
 
     fun characterIsOnGold(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().gold != null
+        return char.isAlive && getCooFor(char).toSquare().gold != null
     }
 
     fun characterIsOnPortion(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().portion != null
+        return char.isAlive && getCooFor(char).toSquare().portion != null
     }
 
     fun characterIsInVillage(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().tile is Village
+        return char.isAlive && getCooFor(char).toSquare().tile is Village
     }
 
     fun characterIsInForest(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().tile is Tree
+        return char.isAlive && getCooFor(char).toSquare().tile is Tree
     }
 
     fun characterIsOnHill(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().tile is Hill
+        return char.isAlive && getCooFor(char).toSquare().tile is Hill
     }
 
     fun characterIsOnStone(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().tile is Stone
+        return char.isAlive && getCooFor(char).toSquare().tile is Stone
     }
 
     fun characterIsInVoid(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().tile is None
+        return char.isAlive && getCooFor(char).toSquare().tile is None
     }
 
     fun characterIsInWater(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().tile is Water
+        return char.isAlive && getCooFor(char).toSquare().tile is Water
     }
 
     fun characterIsInLava(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().tile is Lava
+        return char.isAlive && getCooFor(char).toSquare().tile is Lava
     }
 
     fun characterIsInRuin(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().tile is Ruin
+        return char.isAlive && getCooFor(char).toSquare().tile is Ruin
     }
 
     fun characterIsInShelter(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().tile is Shelter
+        return char.isAlive && getCooFor(char).toSquare().tile is Shelter
     }
 
     fun characterIsAgainstMonster(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().tile is Monster
+        return char.isAlive && getCooFor(char).toSquare().tile is Monster
     }
 
     fun characterIsInSnowy(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().biome == Biome.SNOWY
+        return char.isAlive && getCooFor(char).toSquare().biome == Biome.SNOWY
     }
 
     fun characterIsInCold(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().biome == Biome.COLD
+        return char.isAlive && getCooFor(char).toSquare().biome == Biome.COLD
     }
 
     fun characterIsInValley(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().biome == Biome.VALLEY
+        return char.isAlive && getCooFor(char).toSquare().biome == Biome.VALLEY
     }
 
     fun characterIsInPlains(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().biome == Biome.PLAINS
+        return char.isAlive && getCooFor(char).toSquare().biome == Biome.PLAINS
     }
 
     fun characterIsInSwamp(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().biome == Biome.SWAMP
+        return char.isAlive && getCooFor(char).toSquare().biome == Biome.SWAMP
     }
 
     fun characterIsInDesert(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().biome == Biome.DESERT
+        return char.isAlive && getCooFor(char).toSquare().biome == Biome.DESERT
     }
 
     fun characterIsInBadland(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().biome == Biome.BADLANDS
+        return char.isAlive && getCooFor(char).toSquare().biome == Biome.BADLANDS
     }
 
     fun characterIsOnPlatform(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().platform?.players?.contains(char) ?: false
+        return char.isAlive && getCooFor(char).toSquare().platform?.players?.contains(char) ?: false
     }
 
     fun characterIsOnPortal(char: AbstractCharacter): Boolean {
-        return getCooFor(char).toSquare().portal != null
+        return char.isAlive && getCooFor(char).toSquare().let {
+            it.portal != null
+                    && it.players.contains(char)
+        }
     }
 
     fun characterIsBlocked(char: AbstractCharacter): Boolean {
         return when (char.dir) {
-            Direction.UP -> isBlockedYPlus(char)
-            Direction.DOWN -> isBlockedYMinus(char)
-            Direction.LEFT -> isBlockedXMinus(char)
-            Direction.RIGHT -> isBlockedXPlus(char)
+            Direction.UP -> findPathTowardYPlus(char, false) == null to null
+            Direction.DOWN -> findPathTowardYMinus(char, false) == null to null
+            Direction.LEFT -> findPathTowardXMinus(char, false) == null to null
+            Direction.RIGHT -> findPathTowardXPlus(char, false) == null to null
         }
     }
 
     fun characterIsBlockedLeft(char: AbstractCharacter): Boolean {
         return when (char.dir) {
-            Direction.RIGHT -> isBlockedYPlus(char)
-            Direction.LEFT -> isBlockedYMinus(char)
-            Direction.UP -> isBlockedXMinus(char)
-            Direction.DOWN -> isBlockedXPlus(char)
+            Direction.RIGHT -> findPathTowardYPlus(char, false) == null to null
+            Direction.LEFT -> findPathTowardYMinus(char, false) == null to null
+            Direction.UP -> findPathTowardXMinus(char, false) == null to null
+            Direction.DOWN -> findPathTowardXPlus(char, false) == null to null
         }
     }
 
     fun characterIsBlockedRight(char: AbstractCharacter): Boolean {
         return when (char.dir) {
-            Direction.LEFT -> isBlockedYPlus(char)
-            Direction.RIGHT -> isBlockedYMinus(char)
-            Direction.DOWN -> isBlockedXMinus(char)
-            Direction.UP -> isBlockedXPlus(char)
+            Direction.LEFT -> findPathTowardYPlus(char, false) == null to null
+            Direction.RIGHT -> findPathTowardYMinus(char, false) == null to null
+            Direction.DOWN -> findPathTowardXMinus(char, false) == null to null
+            Direction.UP -> findPathTowardXPlus(char, false) == null to null
         }
     }
 
@@ -775,19 +943,62 @@ class Playground(
     }
 
     fun characterChangeColor(char: AbstractCharacter, color: Color): Boolean {
+        if (char.isDead) return false
         getCooFor(char).toSquare().color = color
         return true
     }
 
-    fun characterJump(char: AbstractCharacter): Boolean {
+    private fun getPathToJump(char: AbstractCharacter): Pair<PlayerReceiver?, PlayerReceiver?> {
+        return when (char.dir) {
+            Direction.UP -> findPathTowardYPlus(char, true)
+            Direction.DOWN -> findPathTowardYMinus(char, true)
+            Direction.LEFT -> findPathTowardXMinus(char, true)
+            Direction.RIGHT -> findPathTowardXPlus(char, true)
+        }
+    }
 
+    fun characterJump(char: AbstractCharacter): Boolean {
+        if (char.isDead) return false
+        val oldTile = getCooFor(char).toSquare()
+        val path = getPathToJump(char)
+        if (path != null to null) {
+            when (char.dir) {
+                Direction.UP -> movePlayerUp(char, path)
+                Direction.DOWN -> movePlayerDown(char, path)
+                Direction.LEFT -> movePlayerLeft(char, path)
+                Direction.RIGHT -> movePlayerRight(char, path)
+            }
+            val newTile = getCooFor(char).toSquare()
+            afterPlayerMakesAMove(char, oldTile.tile, newTile.tile)
+            val amp = getAmplitudeForCharacter(char)
+            char.stamina += (staminaRules.jump * amp).roundToInt()
+            char.hasJustSteppedIntoPortal = false
+            incrementATurn()
+            return true
+        }
+        return false
     }
 
     fun characterStepIntoPortal(char: AbstractCharacter): Boolean {
-
+        if (char.isDead) return false
+        if (characterIsOnPortal(char) && !char.hasJustSteppedIntoPortal) {
+            val p = portals.first { it.coo == getCooFor(char) }
+            if (p.isActive) {
+                p.coo.toSquare().players.remove(char)
+                p.dest.toSquare().players.add(char)
+                val amp = getAmplitudeForCharacter(char)
+                char.stamina += (staminaRules.portalTeleport * amp).roundToInt()
+                p.energy -= decreaseEachUsageOfPortal
+                if (p.energy <= 0) p.isActive = false
+                char.hasJustSteppedIntoPortal = true
+                return true
+            }
+        }
+        return false
     }
 
     fun specialistIsBeforeLock(specialist: Specialist): Boolean {
+        if (specialist.isDead) return false
         val (x, y) = getCooFor(specialist)
         return when (specialist.dir) {
             Direction.UP -> y >= 1 && squares[y - 1][x].tile is Lock
@@ -798,6 +1009,7 @@ class Playground(
     }
 
     fun specialistTurnLockUp(specialist: Specialist): Boolean {
+        if (specialist.isDead) return false
         if (specialistIsBeforeLock(specialist)) {
             with (locks[getCooFor(specialist)]) {
                 this?.controlled?.forEach {
@@ -806,7 +1018,7 @@ class Playground(
                         else this.level += 1
                     }
                 }
-                this?.energy = this?.energy?.minus(1) ?: 0
+                this?.energy = this?.energy?.minus(decreaseEachUsageOfLock) ?: 0
             }
             val amp = getAmplitudeForCharacter(specialist)
             specialist.stamina += (staminaRules.turnLock.up * amp).roundToInt()
@@ -818,6 +1030,7 @@ class Playground(
     }
 
     fun specialistTurnLockDown(specialist: Specialist): Boolean {
+        if (specialist.isDead) return false
         if (specialistIsBeforeLock(specialist)) {
             with (locks[getCooFor(specialist)]) {
                 this?.controlled?.forEach {
@@ -829,7 +1042,7 @@ class Playground(
                         }
                     }
                 }
-                this?.energy = this?.energy?.minus(1) ?: 0
+                this?.energy = this?.energy?.minus(decreaseEachUsageOfLock) ?: 0
             }
             val amp = getAmplitudeForCharacter(specialist)
             specialist.stamina += (staminaRules.turnLock.down * amp).roundToInt()
@@ -841,6 +1054,7 @@ class Playground(
     }
 
     fun specialistExtendShelter(specialist: Specialist): Boolean {
+        if (specialist.isDead) return false
         if (specialist.extendCount > 0 && shelterExtendCount > 0) {
             with (getCooFor(specialist).toSquare().tile) {
                 if (this is Shelter) {
@@ -856,4 +1070,77 @@ class Playground(
         return false
     }
 
+    fun characterBuyPortion(char: AbstractCharacter, size: Size): Boolean {
+        val p = portionsInShop.firstOrNull { it.size == size }
+        return if (p != null && char.goldsInBag >= p.cost) {
+            portionsInShop.remove(p)
+            char.stamina += when (p.size) {
+                Size.SMALL -> staminaRules.portions.small
+                Size.MEDIUM -> staminaRules.portions.medium
+                Size.LARGE -> staminaRules.portions.large
+            }
+            true
+        } else false
+    }
+
+    fun characterBuyWeapon(char: AbstractCharacter, id: Int): Boolean {
+        val w = weaponsInShop.firstOrNull { it.id == id }
+        return if (w != null && char.goldsInBag >= w.cost) {
+            weaponsInShop.remove(w)
+            char.weaponItem = w
+            true
+        } else false
+    }
+
+    fun worldPlace(world: AbstractWorld, character: AbstractCharacter, facing: Direction, at: Coordinate): Boolean {
+
+    }
+
+    fun worldPlace(world: AbstractWorld, item: Item, at: Coordinate): Boolean {
+
+    }
+
+    fun worldPlace(world: AbstractWorld, platform: Platform, at: Coordinate): Boolean {
+
+    }
+
+    fun worldPlace(world: AbstractWorld, portal: Portal, atStart: Coordinate, atEnd: Coordinate): Boolean {
+
+    }
+
+    fun worldPlace(world: AbstractWorld, block: Tile, at: Coordinate): Boolean {
+
+    }
+
+    fun worldPlace(world: AbstractWorld, stair: Stair, facing: Direction, at: Coordinate): Boolean {
+
+    }
+
+    fun worldLevelDown(world: AbstractWorld, at: Coordinate): Boolean {
+
+    }
+
+    fun worldWaitATurn(world: AbstractWorld): Boolean {
+
+    }
+
+    fun worldSetToWin(world: AbstractWorld): Boolean {
+
+    }
+
+    fun worldSetToLost(world: AbstractWorld): Boolean {
+
+    }
+
+    fun worldAllPossibleCoordinates(world: AbstractWorld): List<Coordinate> {
+
+    }
+
+    fun worldExistingCharacters(world: AbstractWorld, at: List<Coordinate>): List<AbstractCharacter> {
+
+    }
+
+    fun worldRemoveAllBlocks(world: AbstractWorld, at: Coordinate): {
+
+    }
 }

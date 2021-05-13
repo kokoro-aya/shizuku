@@ -5,6 +5,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class MonsterRule(
     val rankUp: List<Int>,
+    val atk: List<Int>,
+    val stamina: List<Int>,
     val defeatBonus: DefeatBonusRule,
 )
 

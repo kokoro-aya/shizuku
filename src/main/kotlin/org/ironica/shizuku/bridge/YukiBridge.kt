@@ -18,7 +18,8 @@ import org.ironica.shizuku.playground.characters.Player
 import org.ironica.shizuku.playground.characters.Specialist
 import org.ironica.shizuku.playground.items.*
 import org.ironica.shizuku.playground.playground.Playground
-import org.ironica.shizuku.playground.shop.Weapon
+import org.ironica.shizuku.playground.shop.PortionItem
+import org.ironica.shizuku.playground.shop.WeaponItem
 import org.ironica.shizuku.playground.world.World
 import org.ironica.shizuku.utils.convertSingleBlockToTile
 import yukiLexer
@@ -80,6 +81,8 @@ class YukiBridge(
         val parser = yukiParser(tokens)
         val tree: ParseTree = parser.top_level()
 
+        val inShopWeapons = shopItems.weapons.map { WeaponItem(it.id, it.atk, it.cost) }
+        val inShopPortions = shopItems.portions.map { e -> List(e.remains) { PortionItem(e.size, e.cost) } }.flatten()
 
         val characters = convertPlayerListToCharacterMap(players, createListOfWeaponsFromShop(shopItems.weapons))
 
@@ -95,7 +98,8 @@ class YukiBridge(
             randomInitGolds = specialRules.randomInitGolds,
             randomInitPortals = specialRules.randomInitPortals,
             specialMessages = specialRules.specialMessages,
-            shopItems = shopItems,
+            weaponsInShop = inShopWeapons.toMutableList(),
+            portionsInShop = inShopPortions.toMutableList(),
             userCollision = rules.userCollision,
             maxTerrainHeight = rules.maxTerrainHeight,
             canStackOnTerrain = rules.canStackOnTerrain,
@@ -135,21 +139,21 @@ class YukiBridge(
         exec.visit(tree)
     }
 
-    private fun convertPlayerListToCharacterMap(players: List<PlayerInfo>, weapons: List<Weapon>): MutableMap<AbstractCharacter, Coordinate> {
-        return players.associate { createPlayerInstance(it, weapons) to Coordinate(it.x, it.y) }.toMutableMap()
+    private fun convertPlayerListToCharacterMap(players: List<PlayerInfo>, weaponItems: List<WeaponItem>): MutableMap<AbstractCharacter, Coordinate> {
+        return players.associate { createPlayerInstance(it, weaponItems) to Coordinate(it.x, it.y) }.toMutableMap()
     }
 
-    private fun createPlayerInstance(player: PlayerInfo, weapons: List<Weapon>): AbstractCharacter {
+    private fun createPlayerInstance(player: PlayerInfo, weaponItems: List<WeaponItem>): AbstractCharacter {
         return when (player.role) {
             Role.SPECIALIST -> Specialist(player.id, player.dir, player.stamina, player.atk,
-                weapons.firstOrNull { it.id == player.weaponId })
+                weaponItems.firstOrNull { it.id == player.weaponId })
             Role.PLAYER -> Player(player.id, player.dir, player.stamina, player.atk,
-                weapons.firstOrNull { it.id == player.weaponId })
+                weaponItems.firstOrNull { it.id == player.weaponId })
         }
     }
 
-    private fun createListOfWeaponsFromShop(weapons: List<WeaponShopInfo>): List<Weapon> {
-        return weapons.map { Weapon(it.id, it.atk, it.cost) }
+    private fun createListOfWeaponsFromShop(weapons: List<WeaponShopInfo>): List<WeaponItem> {
+        return weapons.map { WeaponItem(it.id, it.atk, it.cost) }
     }
 
     private fun makeTileGrid(

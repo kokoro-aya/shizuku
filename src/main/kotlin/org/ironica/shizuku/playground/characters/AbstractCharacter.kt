@@ -1,8 +1,11 @@
 package org.ironica.shizuku.playground.characters
 
+import org.ironica.shizuku.corelanguage.literals.PortionItemLiteral
+import org.ironica.shizuku.corelanguage.literals.WeaponItemLiteral
 import org.ironica.shizuku.playground.Color
 import org.ironica.shizuku.playground.Direction
-import org.ironica.shizuku.playground.shop.Weapon
+import org.ironica.shizuku.playground.shop.PortionItem
+import org.ironica.shizuku.playground.shop.WeaponItem
 
 interface AbstractCharacter {
 
@@ -10,8 +13,10 @@ interface AbstractCharacter {
     var dir: Direction
     var stamina: Int
 
+    var hasJustSteppedIntoPortal: Boolean
+
     var atk: Int
-    var weapon: Weapon?
+    var weaponItem: WeaponItem?
 
     var collectedGems: Int
     var collectedGolds: Int
@@ -38,6 +43,8 @@ interface AbstractCharacter {
     fun kill(): Boolean
 
     fun fightAgainstMonster(): Boolean
+    fun buy(portion: PortionItemLiteral): Boolean
+    fun buy(weapon: WeaponItemLiteral): Boolean
 
     fun dance1(): Boolean
     fun dance2(): Boolean
