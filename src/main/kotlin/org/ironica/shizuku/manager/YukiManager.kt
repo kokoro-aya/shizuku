@@ -4,9 +4,7 @@ import org.ironica.shizuku.corelanguage.literals.*
 import org.ironica.shizuku.playground.*
 import org.ironica.shizuku.playground.characters.AbstractCharacter
 import org.ironica.shizuku.playground.characters.Specialist
-import org.ironica.shizuku.playground.items.Item
-import org.ironica.shizuku.playground.items.Platform
-import org.ironica.shizuku.playground.items.Portal
+import org.ironica.shizuku.playground.items.*
 import org.ironica.shizuku.playground.message.GameStatus
 import org.ironica.shizuku.playground.playground.Playground
 import org.ironica.shizuku.playground.world.AbstractWorld
@@ -210,58 +208,207 @@ class YukiManager(val gameMode: GameMode, val playground: Playground) {
     }
 
     // Portal common properties
-    fun isActive(portal: Portal): Boolean
-    fun toggle(portal: Portal): Boolean
+    fun isActive(portal: PortalObject): Boolean = portal.isActive
+    fun toggle(portal: PortalObject) {
+        portal.toggle()
+        printGrid()
+        appendEntry()
+    }
+
+    // Lock common properties
+    fun controlledBy(lock: LockObject): List<Coordinate> = lock.controlledBy
+
+    fun setControlled(lock: LockObject, atColumn: Int, row: Int) {
+        lock.setControlled(Coordinate(atColumn, row))
+        printGrid()
+        appendEntry()
+    }
+
+    fun setControlled(lock: LockObject, at: Coordinate) {
+        lock.setControlled(at)
+        printGrid()
+        appendEntry()
+    }
 
     // World common properties
     fun allPossibleCoordinates(world: AbstractWorld): List<Coordinate>
+        = world.allPossibleCoordinates
 
     // World common methods
-    fun place(world: AbstractWorld, player: AbstractCharacter, facing: Direction, atColumn: Int, row: Int): Boolean
-    fun place(world: AbstractWorld, player: AbstractCharacter, facing: Direction, at: Coordinate): Boolean
-    fun place(world: AbstractWorld, item: Item, atColumn: Int, row: Int): Boolean
-    fun place(world: AbstractWorld, item: Item, at: Coordinate): Boolean
-    fun place(world: AbstractWorld, platform: Platform, atColumn: Int, row: Int): Boolean
-    fun place(world: AbstractWorld, platform: Platform, at: Coordinate): Boolean
-    fun place(world: AbstractWorld, portal: Portal, atStartColumn: Int, startRow: Int, atEndColumn: Int, endRow: Int): Boolean
-    fun place(world: AbstractWorld, portal: Portal, atStart: Coordinate, atEnd: Coordinate): Boolean
-    fun place(world: AbstractWorld, block: Tile, atColumn: Int, row: Int): Boolean
-    fun place(world: AbstractWorld, block: Tile, at: Coordinate): Boolean
-    fun place(world: AbstractWorld, stair: Stair, facing: Direction, atColumn: Int, row: Int): Boolean
-    fun place(world: AbstractWorld, stair: Stair, facing: Direction, at: Coordinate): Boolean
+    fun place(world: AbstractWorld, player: AbstractCharacter, facing: Direction, atColumn: Int, row: Int) {
+        world.place(player, facing, Coordinate(atColumn, row))
+        printGrid()
+        appendEntry()
+    }
+    fun place(world: AbstractWorld, player: AbstractCharacter, facing: Direction, at: Coordinate) {
+        world.place(player, facing, at)
+        printGrid()
+        appendEntry()
+    }
+    fun place(world: AbstractWorld, item: Item, atColumn: Int, row: Int) {
+        world.place(item, Coordinate(atColumn, row))
+        printGrid()
+        appendEntry()
+    }
+    fun place(world: AbstractWorld, item: Item, at: Coordinate) {
+        world.place(item, at)
+        printGrid()
+        appendEntry()
+    }
+    fun place(world: AbstractWorld, platform: Platform, atColumn: Int, row: Int) {
+        world.place(platform, Coordinate(atColumn, row))
+        printGrid()
+        appendEntry()
+    }
+    fun place(world: AbstractWorld, platform: Platform, at: Coordinate) {
+        world.place(platform, at)
+        printGrid()
+        appendEntry()
+    }
+    fun place(world: AbstractWorld, portal: PortalObject, atStartColumn: Int, startRow: Int, atEndColumn: Int, endRow: Int) {
+        if (portal.portal == null) {
+            val st = Coordinate(atStartColumn, startRow);
+            val ed = Coordinate(atEndColumn, endRow)
+            portal.portal = Portal(st, ed, portal.color, portal.isActive, playground.portalRules.defaultEnergy)
+            world.place(portal.portal!!, st, ed)
+            printGrid()
+            appendEntry()
+        } else throw Exception()
+    }
+    fun place(world: AbstractWorld, portal: PortalObject, atStart: Coordinate, atEnd: Coordinate) {
+        if (portal.portal == null) {
+            portal.portal = Portal(atStart, atEnd, portal.color, portal.isActive, playground.portalRules.defaultEnergy)
+            world.place(portal.portal!!, atStart, atEnd)
+            printGrid()
+            appendEntry()
+        } else throw Exception()
+    }
+    fun place(world: AbstractWorld, block: Tile, atColumn: Int, row: Int) {
+        world.place(block, Coordinate(atColumn, row))
+        printGrid()
+        appendEntry()
+    }
+    fun place(world: AbstractWorld, block: Tile, at: Coordinate) {
+        world.place(block, at)
+        printGrid()
+        appendEntry()
+    }
+    fun place(world: AbstractWorld, stair: StairObject, facing: Direction, atColumn: Int, row: Int) {
+        world.placeStair(facing, Coordinate(atColumn, row))
+        printGrid()
+        appendEntry()
+    }
+    fun place(world: AbstractWorld, stair: StairObject, facing: Direction, at: Coordinate) {
+        world.placeStair(facing, at)
+        printGrid()
+        appendEntry()
+    }
 
-    fun setBiome(world: AbstractWorld, biome: Biome, atColumn: Int, row: Int): Boolean
-    fun setBiome(world: AbstractWorld, biome: Biome, at: Coordinate): Boolean
+    fun setBiome(world: AbstractWorld, biome: Biome, atColumn: Int, row: Int) {
+        world.setBiome(biome, Coordinate(atColumn, row))
+        printGrid()
+        appendEntry()
+    }
+    fun setBiome(world: AbstractWorld, biome: Biome, at: Coordinate) {
+        world.setBiome(biome, at)
+        printGrid()
+        appendEntry()
+    }
 
-    fun levelDown(world: AbstractWorld, atColumn: Int, row: Int): Boolean
-    fun levelDown(world: AbstractWorld, at: Coordinate): Boolean
+    fun levelDown(world: AbstractWorld, atColumn: Int, row: Int) {
+        world.levelDown(Coordinate(atColumn, row))
+        printGrid()
+        appendEntry()
+    }
+    fun levelDown(world: AbstractWorld, at: Coordinate) {
+        world.levelDown(at)
+        printGrid()
+        appendEntry()
+    }
 
-    fun waitATurn(world: AbstractWorld): Boolean
-    fun win(world: AbstractWorld): Boolean
-    fun lose(world: AbstractWorld): Boolean
+    fun waitATurn(world: AbstractWorld) {
+        world.waitATurn()
+        printGrid()
+        appendEntry()
+    }
+    fun win(world: AbstractWorld) {
+        world.win()
+        printGrid()
+        appendEntry()
+    }
+    fun lose(world: AbstractWorld) {
+        world.lose()
+        printGrid()
+        appendEntry()
+    }
 
-    fun existingCharacters(world: AbstractWorld, at: List<Coordinate>): () -> List<AbstractCharacter>
-    fun removeAllBlocks(world: AbstractWorld, atColumn: Int, row: Int): Boolean
-    fun removeAllBlocks(at: Coordinate): Boolean
+    fun existingCharacters(world: AbstractWorld, at: List<Coordinate>): List<AbstractCharacter>
+        = world.existingCharacters(at)
+    fun removeAllBlocks(world: AbstractWorld, atColumn: Int, row: Int) {
+        world.removeAllBlocks(Coordinate(atColumn, row))
+        printGrid()
+        appendEntry()
+    }
+    fun removeAllBlocks(world: AbstractWorld, at: Coordinate) {
+        world.removeAllBlocks(at)
+        printGrid()
+        appendEntry()
+    }
 
     // Create object instances
-    fun Player(name: String): PlayerLiteral
-    fun Specialist(name: String): SpecialistLiteral
-    fun Gem(): GemLiteral
-    fun Gold(value: Int): GoldLiteral
-    fun Switch(off: Boolean): SwitchLiteral
-    fun Switch(): SwitchLiteral
-    fun Platform(onLevel: Int, controlledBy: Lock): PlatformLiteral
-    fun Portal(active: Boolean, color: Color): PortalLiteral
-    fun Portion(size: Size): PortionLiteral
-    fun Tile(): TileLiteral
-    fun Lava(cooldown: Int, willDisappear: Boolean): LavaLiteral
-    fun Shelter(): ShelterLiteral
-    fun Village(size: Size): VillageLiteral
-    fun Stair(): StairLiteral
-    fun Lock(): LockLiteral
-    fun Monster(): MonsterLiteral
+    fun initPlayer(name: String): PlayerLiteral {
 
-    fun Portion(size: Size): PortionLiteral
-    fun Weapon(level: Int): WeaponLiteral
+    }
+    fun initSpecialist(name: String): SpecialistLiteral {
+
+    }
+    fun initGem(): GemLiteral {
+
+    }
+    fun initGold(value: Int): GoldLiteral {
+
+    }
+    fun initSwitch(off: Boolean): SwitchLiteral {
+
+    }
+    fun initSwitch(): SwitchLiteral {
+
+    }
+    fun initPlatform(onLevel: Int, controlledBy: Lock): PlatformLiteral {
+
+    }
+    fun initPortal(active: Boolean, color: Color): PortalLiteral {
+
+    }
+    fun initPortion(size: Size): PortionLiteral {
+
+    }
+    fun initTile(): TileLiteral {
+        // TODO Detach to different tile types
+    }
+    fun initLava(cooldown: Int, willDisappear: Boolean): LavaLiteral {
+
+    }
+    fun initShelter(): ShelterLiteral {
+
+    }
+    fun initVillage(size: Size): VillageLiteral {
+
+    }
+    fun initStair(): StairLiteral {
+
+    }
+    fun initLock(): LockLiteral {
+
+    }
+    fun initMonster(): MonsterLiteral {
+
+    }
+
+    fun Portion(size: Size): PortionLiteral {
+
+    }
+    fun Weapon(level: Int): WeaponLiteral {
+
+    }
 }

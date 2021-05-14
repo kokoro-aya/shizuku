@@ -22,7 +22,7 @@ data class Shelter(var cap: Int): Tile() {
             inside.add(char); true
         } else false
     }
-    fun leaveAplayer(char: AbstractCharacter): Boolean {
+    fun leaveAPlayer(char: AbstractCharacter): Boolean {
         return if (inside.contains(char)) {
             inside.remove(char); true
         } else false
@@ -39,7 +39,7 @@ data class Shelter(var cap: Int): Tile() {
 }
 data class Village(val size: Size): Tile()
 data class Stair(val dir: Direction): Tile()
-data class Lock(val controlled: MutableList<Coordinate>, var energy: Int): Tile()
+data class Lock(val controlled: MutableList<Coordinate>, val color: Color, var energy: Int): Tile()
 data class Monster(
     var stamina: Int, var atk: Int, var rank: Int,
     var defeatGetStamina: Int,

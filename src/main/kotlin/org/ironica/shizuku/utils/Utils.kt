@@ -39,7 +39,7 @@ private fun setTileSub(tile: Any, lockRules: PortalOrLockRule, monsterRules: Mon
         is ShelterInfo -> Shelter(tile.cap)
         is VillageInfo -> Village(tile.size)
         is StairInfo -> Stair(tile.dir)
-        is LockInfo -> Lock(tile.controlled.toMutableList(), lockRules.defaultEnergy)
+        is LockInfo -> Lock(tile.controlled.toMutableList(), Color.WHITE, lockRules.defaultEnergy)
         is MonsterInfo -> Monster(tile.stamina, tile.atk, tile.level,
             monsterRules.defeatBonus.stamina[tile.level],
             monsterRules.defeatBonus.gem[tile.level],

@@ -2,8 +2,6 @@ package org.ironica.shizuku.playground.playground
 
 import org.ironica.shizuku.bridge.AdditionalGem
 import org.ironica.shizuku.bridge.AdditionalGold
-import org.ironica.shizuku.bridge.Block
-import org.ironica.shizuku.bridge.ShopInfo
 import org.ironica.shizuku.bridge.initrules.SpecialMessage
 import org.ironica.shizuku.bridge.initrules.rules.*
 import org.ironica.shizuku.playground.*
@@ -58,8 +56,8 @@ class Playground(
     additionalGemOneAfterAnother: Boolean,
     additionalGoldOneAfterAnother: Boolean,
 
-    val decreaseEachUsageOfPortal: Int,
-    val decreaseEachUsageOfLock: Int,
+    val portalRules: PortalOrLockRule,
+    val lockRules: PortalOrLockRule,
 
     val biomeRules: BiomeRule,
     val seasonRules: SeasonRule,
@@ -611,7 +609,7 @@ class Playground(
     }
 
     private fun afterPlayerMakesAMove(char: AbstractCharacter, oldTile: Tile, newTile: Tile) {
-        if (oldTile is Shelter && oldTile.hasPlayer(char)) oldTile.leaveAplayer(char)
+        if (oldTile is Shelter && oldTile.hasPlayer(char)) oldTile.leaveAPlayer(char)
         if (newTile is Shelter && !newTile.hasPlayer(char)) newTile.joinAPlayer(char)
         if (char.inLavaForTurns > 0 && !characterIsInLava(char)) char.inLavaForTurns = 0
         if (char.inWaterForTurns > 0 && !characterIsInWater(char)) char.inWaterForTurns = 0
@@ -748,7 +746,7 @@ class Playground(
     private fun killACharacter(char: AbstractCharacter) {
         with (characters[char]!!.toSquare()) {
             this.players.remove(char)
-            if (this.tile is Shelter) (this.tile as Shelter).leaveAplayer(char)
+            if (this.tile is Shelter) (this.tile as Shelter).leaveAPlayer(char)
             this.platform?.players?.remove(char)
             char.stamina = Int.MIN_VALUE / 2
             // we won't remove the character from the list
@@ -988,7 +986,7 @@ class Playground(
                 p.dest.toSquare().players.add(char)
                 val amp = getAmplitudeForCharacter(char)
                 char.stamina += (staminaRules.portalTeleport * amp).roundToInt()
-                p.energy -= decreaseEachUsageOfPortal
+                p.energy -= portalRules.decreaseEachUsage
                 if (p.energy <= 0) p.isActive = false
                 char.hasJustSteppedIntoPortal = true
                 return true
@@ -1018,7 +1016,7 @@ class Playground(
                         else this.level += 1
                     }
                 }
-                this?.energy = this?.energy?.minus(decreaseEachUsageOfLock) ?: 0
+                this?.energy = this?.energy?.minus(lockRules.decreaseEachUsage) ?: 0
             }
             val amp = getAmplitudeForCharacter(specialist)
             specialist.stamina += (staminaRules.turnLock.up * amp).roundToInt()
@@ -1042,7 +1040,7 @@ class Playground(
                         }
                     }
                 }
-                this?.energy = this?.energy?.minus(decreaseEachUsageOfLock) ?: 0
+                this?.energy = this?.energy?.minus(lockRules.decreaseEachUsage) ?: 0
             }
             val amp = getAmplitudeForCharacter(specialist)
             specialist.stamina += (staminaRules.turnLock.down * amp).roundToInt()
@@ -1093,54 +1091,133 @@ class Playground(
     }
 
     fun worldPlace(world: AbstractWorld, character: AbstractCharacter, facing: Direction, at: Coordinate): Boolean {
-
+        character.dir = facing
+        val sq = at.toSquare()
+        if (!userCollision) {
+            sq.platform?.players?.add(character) ?: sq.players.add(character)
+            return true
+        } else {
+            if (sq.platform?.players?.size == 0) { sq.platform?.players?.add(character); return true }
+            if (sq.players.size == 0) { sq.players.add(character); return true }
+            return false
+        }
     }
 
     fun worldPlace(world: AbstractWorld, item: Item, at: Coordinate): Boolean {
-
+        val sq = at.toSquare()
+        return when (item) {
+            is Gem -> if (sq.gem != null) false else { sq.gem = item; true }
+            is Gold -> if (sq.gold != null) false else { sq.gold = item; true }
+            is Platform -> throw UnsupportedOperationException()
+            is Portal -> throw UnsupportedOperationException()
+            is Portion -> if (sq.portion != null) false else { sq.portion = item; true }
+            is Switch -> if (sq.switch != null) false else { sq.switch = item; true }
+        }
     }
 
     fun worldPlace(world: AbstractWorld, platform: Platform, at: Coordinate): Boolean {
-
+        val sq = at.toSquare()
+        return if (sq.platform != null) false else { sq.platform = platform; true }
     }
 
     fun worldPlace(world: AbstractWorld, portal: Portal, atStart: Coordinate, atEnd: Coordinate): Boolean {
-
+        val st = atStart.toSquare(); val ed = atEnd.toSquare()
+        return if (st.portal != null) false else { st.portal = portal; true }
     }
 
     fun worldPlace(world: AbstractWorld, block: Tile, at: Coordinate): Boolean {
-
+        val st = at.toSquare()
+        if (block is Stair) throw UnsupportedOperationException()
+        if (block is None) {
+            removeBlock(st)
+        } else {
+            st.level += 1
+        }
+        st.tile = block
+        return true
     }
 
-    fun worldPlace(world: AbstractWorld, stair: Stair, facing: Direction, at: Coordinate): Boolean {
+    fun worldPlaceStair(world: AbstractWorld, facing: Direction, at: Coordinate): Boolean {
+        val st = at.toSquare()
+        val stair = Stair(facing)
+        return when (st.tile) {
+            Ruin, is Shelter, is Village, is Stair, is Lock, is Monster -> false
+            else -> {
+                st.tile = stair
+                st.level += 1
+                true
+            }
+        }
+    }
 
+    fun worldSetBiome(world: AbstractWorld, biome: Biome, at: Coordinate): Boolean {
+        at.toSquare().biome = biome
+        return true
     }
 
     fun worldLevelDown(world: AbstractWorld, at: Coordinate): Boolean {
-
+        at.toSquare().let {
+            return if (it.level > 1) {
+                it.level -= 1
+                true
+            } else false
+        }
     }
 
     fun worldWaitATurn(world: AbstractWorld): Boolean {
-
+        incrementATurn()
+        return true
     }
 
     fun worldSetToWin(world: AbstractWorld): Boolean {
-
+        status = GameStatus.WIN
+        return true
     }
 
     fun worldSetToLost(world: AbstractWorld): Boolean {
-
+        status = GameStatus.LOST
+        return true
     }
 
     fun worldAllPossibleCoordinates(world: AbstractWorld): List<Coordinate> {
-
+        return squares.mapIndexed { y, line ->
+            line.mapIndexed { x, _ ->
+                Coordinate(x, y)
+            }
+        }.flatten()
     }
 
     fun worldExistingCharacters(world: AbstractWorld, at: List<Coordinate>): List<AbstractCharacter> {
-
+        return characters.keys.toList()
     }
 
-    fun worldRemoveAllBlocks(world: AbstractWorld, at: Coordinate): {
+    private fun removeBlock(square: Square) {
+        square.platform?.players?.forEach { it.kill() }
+        square.players.forEach { it.kill() }
+        square.platform = null; square.gold = null; square.gem = null
+        square.portal = null; square.portion = null; square.switch = null
+        square.level = 0
+    }
 
+    fun worldRemoveAllBlocks(world: AbstractWorld, at: Coordinate): Boolean {
+        squares.forEach { it.forEach {
+            it.tile = None
+            removeBlock(it)
+        } }
+        return true
+    }
+
+    fun portalToggle(portal: Portal?): Boolean {
+        if (portal == null) return false
+        portal.isActive = !portal.isActive
+        return true
+    }
+
+    fun lockControlledBy(lock: Lock?): List<Coordinate> {
+        return lock?.controlled ?: listOf()
+    }
+
+    fun lockSetControlled(lock: Lock?, at: Coordinate): Boolean {
+        return lock?.controlled?.contains(at) ?: false
     }
 }

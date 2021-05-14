@@ -12,4 +12,5 @@ annotation class PlaygroundFunction(
     val arg3: Array<PFType> = [PFType.TNone],
     val arg4: Array<PFType> = [PFType.TNone],
     val arg5: Array<PFType> = [PFType.TNone],
+    val arg6: Array<PFType> = [PFType.TNone],
 )

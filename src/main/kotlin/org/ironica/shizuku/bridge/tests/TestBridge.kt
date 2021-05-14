@@ -1,16 +1,11 @@
 package org.ironica.shizuku.bridge
 
-import org.antlr.v4.runtime.CharStream
-import org.antlr.v4.runtime.CharStreams
-import org.antlr.v4.runtime.CommonTokenStream
-import org.antlr.v4.runtime.tree.ParseTree
 import org.ironica.shizuku.bridge.initrules.ChangeBlock
 import org.ironica.shizuku.bridge.initrules.ChangePlatform
 import org.ironica.shizuku.bridge.initrules.SpecialRules
-import org.ironica.shizuku.bridge.initrules.disabled.DisabledFeature
-import org.ironica.shizuku.bridge.initrules.preinitialized.PreInitializedObject
 import org.ironica.shizuku.bridge.initrules.rules.Rules
-import org.ironica.shizuku.corelanguage.YukiVisitorImpl
+import org.ironica.shizuku.bridge.tests.TestAction
+import org.ironica.shizuku.bridge.tests.TestEnvironment
 import org.ironica.shizuku.manager.YukiManager
 import org.ironica.shizuku.playground.*
 import org.ironica.shizuku.playground.characters.AbstractCharacter
@@ -22,14 +17,13 @@ import org.ironica.shizuku.playground.shop.PortionItem
 import org.ironica.shizuku.playground.shop.WeaponItem
 import org.ironica.shizuku.playground.world.World
 import org.ironica.shizuku.utils.convertSingleBlockToTile
-import yukiLexer
-import yukiParser
 import java.util.*
 import kotlin.Exception
+import kotlin.reflect.full.declaredFunctions
+import kotlin.reflect.full.findAnnotation
 
-class YukiBridge(
+class TestBridge(
     private val type: String,
-    private val code: String,
     private var squares: List<List<Square>> = listOf(),
     grid: List<List<Block>>,
     levels: List<List<Int>>,
@@ -43,9 +37,6 @@ class YukiBridge(
     private val locks: MutableMap<Coordinate, Lock> = mutableMapOf(),
     private val players: List<PlayerInfo>,
 
-    private val disabledFeatures: List<DisabledFeature>,
-    private val preInitialized: List<PreInitializedObject>,
-
     private val rules: Rules,
 
     private val additionalGems: List<AdditionalGem>,
@@ -53,6 +44,8 @@ class YukiBridge(
 
     private val specialRules: SpecialRules,
     private val shopItems: ShopInfo,
+
+    private val action: Int,
 
     ) {
     init {
@@ -75,11 +68,6 @@ class YukiBridge(
     }
 
     fun start() {
-        val input: CharStream = CharStreams.fromString(code)
-        val lexer = yukiLexer(input)
-        val tokens = CommonTokenStream(lexer)
-        val parser = yukiParser(tokens)
-        val tree: ParseTree = parser.top_level()
 
         val inShopWeapons = shopItems.weapons.map { WeaponItem(it.id, it.atk, it.cost) }
         val inShopPortions = shopItems.portions.map { e -> List(e.remains) { PortionItem(e.size, e.cost) } }.flatten()
@@ -134,9 +122,12 @@ class YukiBridge(
             gameMode = gameMode,
             playground = playground,
         )
-        manager.appendEntry()
-        val exec = YukiVisitorImpl(manager, disabledFeatures, preInitialized)
-        exec.visit(tree)
+        playground.printGrid()
+        val environment = TestEnvironment(manager)
+        val func = environment::class.declaredFunctions.first {
+            it.findAnnotation<TestAction>()?.id == action
+        }
+        func.call(environment)
     }
 
     private fun convertPlayerListToCharacterMap(players: List<PlayerInfo>, weaponItems: List<WeaponItem>): MutableMap<AbstractCharacter, Coordinate> {
